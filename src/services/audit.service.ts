@@ -1,5 +1,5 @@
 import { supabase } from '../db/supabase'
-import { Order }    from '../types'
+import { iOrder } from '../types'
 
 /**
  * Audit Service
@@ -22,7 +22,7 @@ import { Order }    from '../types'
  * (e.g. Sentry.captureException) once one is integrated.
  */
 
-/* ── Internal helpers ───────────────────────────────────────────────────── */
+/* Internal helpers */
 
 /**
  * Emits a structured error to the console.
@@ -34,19 +34,17 @@ import { Order }    from '../types'
  */
 function logAuditError(context: string, message: string, detail?: unknown): void {
   console.error(JSON.stringify({
-    level:     'error',
-    service:   'audit',
+    level: 'error',
+    service: 'audit',
     context,
     message,
-    detail:    detail ?? null,
+    detail: detail ?? null,
     timestamp: new Date().toISOString(),
   }))
 }
 
-/* ── Tracked fields ─────────────────────────────────────────────────────── */
-
-/** Only these Order fields are recorded in the audit trail */
-const TRACKED_FIELDS: (keyof Order)[] = [
+/* Only tracked order fieldss are recorded in the audit trail */
+const TRACKED_FIELDS: (keyof iOrder)[] = [
   'client_name',
   'mineral_type',
   'quantity_kg',
@@ -55,24 +53,24 @@ const TRACKED_FIELDS: (keyof Order)[] = [
   'notes',
 ]
 
-/* ── Public API ─────────────────────────────────────────────────────────── */
+/* Public API */
 
 /**
  * Writes one audit_log row per field that changed on an order.
  * Called by the orders controller after every successful update.
  */
 export async function logOrderChanges(
-  orderId:     string,
+  orderId: string,
   changedById: string,
-  previous:    Order,
-  updated:     Order
+  previous: iOrder,
+  updated: iOrder
 ): Promise<void> {
   const entries: {
-    order_id:      string
-    changed_by:    string
+    order_id: string
+    changed_by: string
     field_changed: string
-    old_value:     string | null
-    new_value:     string | null
+    old_value: string | null
+    new_value: string | null
   }[] = []
 
   for (const field of TRACKED_FIELDS) {
@@ -82,11 +80,11 @@ export async function logOrderChanges(
     /* Only log fields whose value actually changed */
     if (String(oldVal) !== String(newVal)) {
       entries.push({
-        order_id:      orderId,
-        changed_by:    changedById,
+        order_id: orderId,
+        changed_by: changedById,
         field_changed: field,
-        old_value:     oldVal != null ? String(oldVal) : null,
-        new_value:     newVal != null ? String(newVal) : null,
+        old_value: oldVal != null ? String(oldVal) : null,
+        new_value: newVal != null ? String(newVal) : null,
       })
     }
   }
@@ -108,16 +106,16 @@ export async function logOrderChanges(
  * Logs order creation as a single audit entry with a descriptive message.
  */
 export async function logOrderCreated(
-  orderId:     string,
+  orderId: string,
   changedById: string,
   orderNumber: string
 ): Promise<void> {
   const { error } = await supabase.from('audit_logs').insert({
-    order_id:      orderId,
-    changed_by:    changedById,
+    order_id: orderId,
+    changed_by: changedById,
     field_changed: 'order',
-    old_value:     null,
-    new_value:     `Order ${orderNumber} created`,
+    old_value: null,
+    new_value: `Order ${orderNumber} created`,
   })
 
   if (error) {
@@ -133,16 +131,16 @@ export async function logOrderCreated(
  * Logs a cancellation with the previous status for clear before/after context.
  */
 export async function logOrderCancelled(
-  orderId:        string,
-  changedById:    string,
+  orderId: string,
+  changedById: string,
   previousStatus: string
 ): Promise<void> {
   const { error } = await supabase.from('audit_logs').insert({
-    order_id:      orderId,
-    changed_by:    changedById,
+    order_id: orderId,
+    changed_by: changedById,
     field_changed: 'status',
-    old_value:     previousStatus,
-    new_value:     'cancelled',
+    old_value: previousStatus,
+    new_value: 'cancelled',
   })
 
   if (error) {

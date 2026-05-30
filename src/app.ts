@@ -4,44 +4,38 @@ import express, {
   Response,
   NextFunction,
 } from 'express'
-import cors        from 'cors'
-import helmet      from 'helmet'
-import morgan      from 'morgan'
-import rateLimit   from 'express-rate-limit'
+import cors from 'cors'
+import helmet from 'helmet'
+import morgan from 'morgan'
+import rateLimit from 'express-rate-limit'
 import { randomUUID } from 'crypto'
-import dotenv      from 'dotenv'
+import dotenv from 'dotenv'
 
 dotenv.config()
 
-/* ── Route imports ──────────────────────────────────────────────────────── */
-import authRoutes   from './routes/auth.routes'
-import orderRoutes  from './routes/orders.routes'
-import userRoutes   from './routes/users.routes'
+/* Route imports */
+import authRoutes from './routes/auth.routes'
+import orderRoutes from './routes/orders.routes'
+import userRoutes from './routes/users.routes'
 import reportRoutes from './routes/reports.routes'
 
 const app: Application = express()
 
-/* ── Security headers ───────────────────────────────────────────────────── */
+// Security headers
 app.use(helmet())
 
-/* ── CORS ───────────────────────────────────────────────────────────────── */
+// CORS
 app.use(cors({
-  origin:         process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials:    true,
-  methods:        ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
 
-/* ── Body parsing ───────────────────────────────────────────────────────── */
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-/* ── Request correlation ID ─────────────────────────────────────────────── */
-/*
- * ── Fix: observability ───────────────────────────────────────────────────
- * Without a per-request identifier, log lines from concurrent users
- * interleave with no way to trace them back to a single request.
- *
+/* Request correlation ID
  * This middleware:
  *  1. Generates a UUID for every incoming request.
  *  2. Attaches it to req.id so controllers can include it in log calls.
@@ -50,25 +44,17 @@ app.use(express.urlencoded({ extended: true }))
  */
 app.use((req: Request, res: Response, next: NextFunction) => {
   const requestId = randomUUID()
-  ;(req as Request & { id: string }).id = requestId
+    ; (req as Request & { id: string }).id = requestId
   res.setHeader('X-Request-Id', requestId)
   next()
 })
 
-/* ── HTTP request logging (dev only) ────────────────────────────────────── */
+// HTTP request logging
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'))
 }
 
-/* ── Rate limiters ──────────────────────────────────────────────────────── */
-/*
- * ── Fix: per-route rate limiting ─────────────────────────────────────────
- * The original code used a single global limiter of 100 req / 15 min.
- * A bot could exhaust that budget on cheap GET /health calls and block
- * legitimate users from logging in or creating orders.
- * The export endpoints were especially dangerous — a single PDF render
- * can take seconds; 100 concurrent exports would lock the process.
- *
+/* Rate limiters
  * We now apply:
  *  - A tight limit on auth endpoints to slow brute-force login attacks.
  *  - A very tight limit on export endpoints to prevent CPU/memory abuse.
@@ -81,19 +67,19 @@ if (process.env.NODE_ENV !== 'production') {
 
 /** Global fallback — applies to any route not covered by a specific limiter */
 const globalLimiter = rateLimit({
-  windowMs:       15 * 60 * 1000,   /* 15 minutes */
-  max:            200,
+  windowMs: 15 * 60 * 1000,   /* 15 minutes */
+  max: 200,
   standardHeaders: true,
-  legacyHeaders:  false,
+  legacyHeaders: false,
   message: { success: false, error: 'Too many requests. Please try again later.' },
 })
 
 /** Tight limiter for login — slows brute-force credential stuffing */
 const authLimiter = rateLimit({
-  windowMs:       15 * 60 * 1000,   /* 15 minutes */
-  max:            20,                /* 20 login attempts per IP per window */
+  windowMs: 15 * 60 * 1000,   /* 15 minutes */
+  max: 20,                /* 20 login attempts per IP per window */
   standardHeaders: true,
-  legacyHeaders:  false,
+  legacyHeaders: false,
   message: { success: false, error: 'Too many login attempts. Please try again later.' },
 })
 
@@ -103,51 +89,45 @@ const authLimiter = rateLimit({
  * Limiting to 10 per 15 minutes per IP prevents CPU / OOM abuse.
  */
 const exportLimiter = rateLimit({
-  windowMs:       15 * 60 * 1000,   /* 15 minutes */
-  max:            10,
+  windowMs: 15 * 60 * 1000,
+  max: 10,
   standardHeaders: true,
-  legacyHeaders:  false,
+  legacyHeaders: false,
   message: { success: false, error: 'Export limit reached. Please try again later.' },
 })
 
 app.use(globalLimiter)
 
-/* ── Health check ───────────────────────────────────────────────────────── */
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     data: {
-      status:    'ok',
-      service:   'OMS API',
+      status: 'ok',
+      service: 'OMS API',
       timestamp: new Date().toISOString(),
     },
   })
 })
 
-/* ── API routes ─────────────────────────────────────────────────────────── */
+/* API routes */
 /*
  * Per-route limiters are mounted before the router so they apply to every
  * handler in that router without requiring individual middleware calls.
  */
-app.use('/api/auth',    authLimiter,   authRoutes)
-app.use('/api/orders',                 orderRoutes)
-app.use('/api/users',                  userRoutes)
-app.use('/api/reports',                reportRoutes)
+app.use('/api/auth', authLimiter, authRoutes)
+app.use('/api/orders', orderRoutes)
+app.use('/api/users', userRoutes)
+app.use('/api/reports', reportRoutes)
 
 /* Export-specific limiter applied directly to the export sub-paths */
 app.use('/api/reports/export', exportLimiter)
 
-/* ── 404 handler ────────────────────────────────────────────────────────── */
+/* 404 */
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ success: false, error: 'Route not found.' })
 })
 
-/* ── Global error handler ───────────────────────────────────────────────── */
-/*
- * Must declare all four parameters so Express recognises this as error
- * middleware — do not remove _next even though it is unused.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+/* Global error handler */
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('[Unhandled Error]', err.message)
   res.status(500).json({ success: false, error: 'Internal server error.' })

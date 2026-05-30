@@ -1,18 +1,18 @@
 import { Request, Response, NextFunction } from 'express'
-import { createClient }                    from '@supabase/supabase-js'
-import { supabase }                        from '../db/supabase'    /* moved to top-level import */
-import { UserRole }                        from '../types'
-import { sendError }                       from '../utils/response'
+import { createClient } from '@supabase/supabase-js'
+import { supabase } from '../db/supabase'    /* moved to top-level import */
+import { UserRole } from '../types'
+import { sendError } from '../utils/response'
 
 /**
  * Anon client — used only to verify the incoming JWT.
  */
-const supabaseUrl     = process.env.SUPABASE_URL
+const supabaseUrl = process.env.SUPABASE_URL
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
-    'Missing SUPABASE_URL or SUPABASE_ANON_KEY in environment variables.'
+    'Missing SUPABASE_URL or SUPABASE_ANON_KEY'
   )
 }
 
@@ -76,9 +76,9 @@ export async function verifyToken(
 
     /* Stamp the request — available to all downstream handlers */
     req.user = {
-      id:    profile.id,
+      id: profile.id,
       email: profile.email,
-      role:  profile.role as UserRole,
+      role: profile.role as UserRole,
     }
 
     next()

@@ -1,11 +1,11 @@
-import { Request, Response }     from 'express'
-import { z }                     from 'zod'
+import { Request, Response } from 'express'
+import { z } from 'zod'
 import { sendSuccess, sendError } from '../utils/response'
-import * as OrdersService         from '../services/orders.service'
-import * as ReportsService        from '../services/reports.service'
-import { OrderFilters, OrderStatus } from '../types'
+import * as OrdersService from '../services/orders.service'
+import * as ReportsService from '../services/reports.service'
+import { iOrderFilters, OrderStatus } from '../types'
 
-/**
+/*
  * Reports Controller
  *
  * Two response patterns:
@@ -16,65 +16,34 @@ import { OrderFilters, OrderStatus } from '../types'
  * File streaming skips sendSuccess() entirely.
  * Headers instruct the browser to treat the response as a download.
  */
-
-/* ── Constants ──────────────────────────────────────────────────────────── */
-
-/**
- * Hard cap on the number of orders fetched for any report.
- *
- * ── Fix: memory exhaustion ───────────────────────────────────────────────
- * The original code used limit:2000 with no server-side enforcement.
- * getOrders() clips user-supplied limits to 100, but the report path set
- * limit directly and therefore bypassed that guard entirely.
- *
- * Loading thousands of full Order objects into memory, serialising them
- * to ExcelJS / jsPDF, and streaming the result all happen synchronously
- * in the same event-loop turn — blocking Node and risking OOM on large
- * tables.
- *
- * Fix: a named constant enforces the cap here at the controller boundary.
- * If exports beyond this size are needed in future, replace getOrders()
- * with a cursor-based streaming approach rather than raising this number.
- */
 const REPORT_ROW_CAP = 500
 
 const VALID_STATUSES: OrderStatus[] = [
   'pending', 'confirmed', 'dispatched', 'delivered', 'cancelled',
 ]
 
-/** ISO-8601 date string YYYY-MM-DD */
+// ISO-8601 date string YYYY-MM-DD
 const DateStringSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
   .refine(v => !isNaN(new Date(v).getTime()), 'Invalid date')
 
-/* ── Shared filter parser ───────────────────────────────────────────────── */
-
+// Shared filter parser
 /**
  * Parses and validates all query parameters shared by the summary and
  * export endpoints.
- *
- * ── Fix: status cast via `as any` removed ────────────────────────────────
- * The original code cast the raw query string  `as string | undefined as any`
- * which defeated the OrderStatus union type.  We now use an explicit
- * whitelist check so TypeScript and the runtime agree on valid values.
- *
- * ── Fix: date strings validated ──────────────────────────────────────────
- * date_from and date_to are now validated against ISO-8601 format before
- * being forwarded to the service layer.  Invalid values are rejected with
- * a 400 rather than reaching Postgres and causing an unhandled DB error.
  */
 function parseReportFilters(
   query: Request['query']
-): { filters: OrderFilters; error?: string } {
-  /* Validate status */
+): { filters: iOrderFilters; error?: string } {
+  // Validate status
   const rawStatus = query.status as string | undefined
-  const status    =
+  const status =
     rawStatus && VALID_STATUSES.includes(rawStatus as OrderStatus)
       ? (rawStatus as OrderStatus)
       : undefined
 
-  /* Validate dates */
+  // Validate dates
   if (query.date_from) {
     const result = DateStringSchema.safeParse(query.date_from)
     if (!result.success) {
@@ -93,17 +62,17 @@ function parseReportFilters(
     filters: {
       status,
       mineral_type: query.mineral_type as string | undefined,
-      client_name:  query.client_name  as string | undefined,
-      date_from:    query.date_from    as string | undefined,
-      date_to:      query.date_to      as string | undefined,
-      /* No pagination for reports — we want all matching orders up to cap */
+      client_name: query.client_name as string | undefined,
+      date_from: query.date_from as string | undefined,
+      date_to: query.date_to as string | undefined,
+      /* No pagination for reports, only all matching orders up to cap */
       limit: REPORT_ROW_CAP,
-      page:  1,
+      page: 1,
     },
   }
 }
 
-/* ── GET /api/reports/summary ───────────────────────────────────────────── */
+// GET /api/reports/summary
 
 export async function getSummary(req: Request, res: Response): Promise<void> {
   try {
@@ -116,9 +85,9 @@ export async function getSummary(req: Request, res: Response): Promise<void> {
     const result = await OrdersService.getOrders(filters)
     const orders = result.items
 
-    /* Aggregate totals server-side — never send all rows to the frontend */
-    const totalValue = orders.reduce((sum, o) => sum + Number(o.total_zar),    0)
-    const totalQty   = orders.reduce((sum, o) => sum + Number(o.quantity_kg), 0)
+    // Aggregate totals server-side, never send all rows to the frontend
+    const totalValue = orders.reduce((sum, o) => sum + Number(o.total_zar), 0)
+    const totalQty = orders.reduce((sum, o) => sum + Number(o.quantity_kg), 0)
 
     const byStatus = orders.reduce<Record<string, number>>((acc, o) => {
       acc[o.status] = (acc[o.status] ?? 0) + 1
@@ -128,22 +97,22 @@ export async function getSummary(req: Request, res: Response): Promise<void> {
     const byMineral = orders.reduce<
       Record<string, { count: number; value: number }>
     >((acc, o) => {
-      acc[o.mineral_type]         = acc[o.mineral_type] ?? { count: 0, value: 0 }
-      acc[o.mineral_type].count  += 1
-      acc[o.mineral_type].value  += Number(o.total_zar)
+      acc[o.mineral_type] = acc[o.mineral_type] ?? { count: 0, value: 0 }
+      acc[o.mineral_type].count += 1
+      acc[o.mineral_type].value += Number(o.total_zar)
       return acc
     }, {})
 
     sendSuccess(res, {
-      total_orders:    orders.length,
+      total_orders: orders.length,
       total_value_zar: totalValue,
-      total_qty_kg:    totalQty,
-      by_status:       byStatus,
-      by_mineral:      byMineral,
+      total_qty_kg: totalQty,
+      by_status: byStatus,
+      by_mineral: byMineral,
       filters_applied: {
-        date_from:    filters.date_from    ?? null,
-        date_to:      filters.date_to      ?? null,
-        status:       filters.status       ?? null,
+        date_from: filters.date_from ?? null,
+        date_to: filters.date_to ?? null,
+        status: filters.status ?? null,
         mineral_type: filters.mineral_type ?? null,
       },
     })
@@ -153,7 +122,7 @@ export async function getSummary(req: Request, res: Response): Promise<void> {
   }
 }
 
-/* ── GET /api/reports/export/excel ─────────────────────────────────────── */
+// GET /api/reports/export/excel
 
 export async function exportExcel(req: Request, res: Response): Promise<void> {
   try {
@@ -172,16 +141,16 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
 
     const buffer = await ReportsService.buildExcelReport(result.items, {
       date_from: filters.date_from,
-      date_to:   filters.date_to,
-      status:    filters.status,
+      date_to: filters.date_to,
+      status: filters.status,
     })
 
-    /* Build a descriptive filename including the date range */
+    // Build a descriptive filename including the date range
     const datePart = filters.date_from && filters.date_to
       ? `_${filters.date_from}_to_${filters.date_to}`
       : `_${new Date().toISOString().slice(0, 10)}`
 
-    const filename = `ntsoaki_orders${datePart}.xlsx`
+    const filename = `mare_oms_orders${datePart}.xlsx`
 
     /*
      * File streaming headers:
@@ -190,10 +159,10 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
      *  Content-Length      — lets the browser show a progress indicator
      *  Cache-Control       — prevents stale cached exports
      */
-    res.setHeader('Content-Type',        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-    res.setHeader('Content-Length',      buffer.length)
-    res.setHeader('Cache-Control',       'no-cache, no-store, must-revalidate')
+    res.setHeader('Content-Length', buffer.length)
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
 
     res.status(200).end(buffer)
   } catch (err) {
@@ -205,7 +174,7 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
   }
 }
 
-/* ── GET /api/reports/export/pdf ────────────────────────────────────────── */
+// GET /api/reports/export/pdf
 
 export async function exportPdf(req: Request, res: Response): Promise<void> {
   try {
@@ -224,20 +193,20 @@ export async function exportPdf(req: Request, res: Response): Promise<void> {
 
     const buffer = await ReportsService.buildPdfReport(result.items, {
       date_from: filters.date_from,
-      date_to:   filters.date_to,
-      status:    filters.status,
+      date_to: filters.date_to,
+      status: filters.status,
     })
 
     const datePart = filters.date_from && filters.date_to
       ? `_${filters.date_from}_to_${filters.date_to}`
       : `_${new Date().toISOString().slice(0, 10)}`
 
-    const filename = `ntsoaki_orders${datePart}.pdf`
+    const filename = `mare_oms_orders${datePart}.pdf`
 
-    res.setHeader('Content-Type',        'application/pdf')
+    res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-    res.setHeader('Content-Length',      buffer.length)
-    res.setHeader('Cache-Control',       'no-cache, no-store, must-revalidate')
+    res.setHeader('Content-Length', buffer.length)
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
 
     res.status(200).end(buffer)
   } catch (err) {

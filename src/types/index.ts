@@ -1,24 +1,8 @@
-/**
- * Shared type definitions for the OMS API.
- *
- * ── Changes ───────────────────────────────────────────────────────────────
- * - iCreateUser and iUpdateUser (from types/iusers.ts) have been removed.
- *   They duplicated the shape already inferred by the Zod schemas in
- *   users.controller.ts and were a second source of truth that could drift.
- *   Use  z.infer<typeof CreateUserSchema>  in any place that previously
- *   imported those interfaces.
- *
- * - The Request augmentation (req.user) is kept in this file so it is
- *   available to every controller without an extra import.
- */
-
 import { Request } from 'express'
-
-/* ── User ───────────────────────────────────────────────────────────────── */
 
 export type UserRole = 'admin' | 'clerk' | 'viewer'
 
-export interface User {
+export interface iUser {
   id:         string
   email:      string
   full_name:  string
@@ -27,8 +11,7 @@ export interface User {
   created_at: string
 }
 
-/* ── Order ──────────────────────────────────────────────────────────────── */
-
+/* Order */
 export type OrderStatus =
   | 'pending'
   | 'confirmed'
@@ -36,7 +19,7 @@ export type OrderStatus =
   | 'delivered'
   | 'cancelled'
 
-export interface Order {
+export interface iOrder {
   id:             string
   order_number:   string
   client_name:    string
@@ -49,10 +32,10 @@ export interface Order {
   created_by:     string
   created_at:     string
   updated_at:     string
-  creator?:       Pick<User, 'id' | 'full_name' | 'email'>
+  creator?:       Pick<iUser, 'id' | 'full_name' | 'email'>
 }
 
-export interface CreateOrderDTO {
+export interface iCreateOrderDTO {
   client_name:    string
   mineral_type:   string
   quantity_kg:    number
@@ -60,7 +43,7 @@ export interface CreateOrderDTO {
   notes?:         string
 }
 
-export interface UpdateOrderDTO {
+export interface iUpdateOrderDTO {
   client_name?:    string
   mineral_type?:   string
   quantity_kg?:    number
@@ -69,9 +52,8 @@ export interface UpdateOrderDTO {
   status?:         OrderStatus
 }
 
-/* ── Audit Log ──────────────────────────────────────────────────────────── */
-
-export interface AuditLog {
+/* Audit Log */
+export interface iAuditLog {
   id:            string
   order_id:      string
   changed_by:    string
@@ -79,28 +61,26 @@ export interface AuditLog {
   old_value:     string | null
   new_value:     string | null
   changed_at:    string
-  changer?:      Pick<User, 'id' | 'full_name' | 'email'>
+  changer?:      Pick<iUser, 'id' | 'full_name' | 'email'>
 }
 
-/* ── API response shapes ────────────────────────────────────────────────── */
-
-export interface ApiSuccess<T> {
+/* API response shapes */
+export interface iApiSuccess<T> {
   success: true
   data:    T
   message?: string
 }
 
-export interface ApiError {
+export interface iApiError {
   success: false
   error:   string
   details?: unknown
 }
 
-export type ApiResponse<T> = ApiSuccess<T> | ApiError
+export type ApiResponse<T> = iApiSuccess<T> | iApiError
 
-/* ── Pagination ─────────────────────────────────────────────────────────── */
-
-export interface PaginatedResult<T> {
+/* Pagination */
+export interface iPaginatedResult<T> {
   items:      T[]
   total:      number
   page:       number
@@ -108,9 +88,8 @@ export interface PaginatedResult<T> {
   totalPages: number
 }
 
-/* ── Order Filters ──────────────────────────────────────────────────────── */
-
-export interface OrderFilters {
+/* Order Filters */
+export interface iOrderFilters {
   /** Must be a member of the OrderStatus union — validated before use */
   status?:       OrderStatus
   mineral_type?: string
@@ -124,7 +103,7 @@ export interface OrderFilters {
   limit?:        number
 }
 
-/* ── Express Request augmentation ───────────────────────────────────────── */
+/* Express Request augmentation */
 
 declare global {
   namespace Express {
@@ -138,14 +117,7 @@ declare global {
   }
 }
 
-/**
- * AuthenticatedRequest
- *
- * Use in controller and middleware signatures where verifyToken has already
- * run and user is guaranteed to be present.  Narrows req.user from optional
- * to required so call sites do not need the non-null assertion (!).
- */
-export interface AuthenticatedRequest extends Request {
+export interface iAuthenticatedRequest extends Request {
   user: {
     id:    string
     email: string

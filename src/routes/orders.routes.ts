@@ -2,7 +2,7 @@ import { Router, RequestHandler } from 'express'
 import { verifyToken } from '../middleware/auth.middleware'
 import { requireRole } from '../middleware/role.middleware'
 import * as OrdersController from '../controllers/orders.controller'
-import { AuthenticatedRequest } from '../types'
+// import { iAuthenticatedRequest } from '../types'
 
 // ROLE RULES (from SRS):
 //   GET    /orders            → all authenticated (admin, clerk, viewer)
@@ -33,28 +33,28 @@ router.get('/:id',
   OrdersController.getOrderById as RequestHandler
 )
 
-// Audit trail — admin only
+// Audit trail, admin only
 router.get('/:id/audit',
   verifyToken as RequestHandler,
   requireRole('admin') as RequestHandler,
   OrdersController.getOrderAuditLog as RequestHandler
 )
 
-// Create order
+// CREATE ORDER
 router.post('/',
   verifyToken as RequestHandler,
   requireRole('admin', 'clerk') as RequestHandler,
   OrdersController.createOrder as RequestHandler
 )
 
-// Update order fields
+// UPDATE ORDER FIELDS
 router.patch('/:id',
   verifyToken as RequestHandler,
   requireRole('admin', 'clerk') as RequestHandler,
   OrdersController.updateOrder as RequestHandler
 )
 
-// Cancel order — separate endpoint, explicit intent
+// CANCEL ORDER, separate endpoint, explicit intent
 router.patch('/:id/cancel',
   verifyToken as RequestHandler,
   requireRole('admin', 'clerk') as RequestHandler,

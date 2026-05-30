@@ -14,7 +14,7 @@ const ResetSchema = z.object({
   email: z.string().email('Invalid email address.'),
 })
 
-// ── POST /api/auth/login ─────────────────────────────────────
+// POST /api/auth/login
 export async function login(req: Request, res: Response): Promise<void> {
   try {
     const parsed = LoginSchema.safeParse(req.body)
@@ -34,7 +34,7 @@ export async function login(req: Request, res: Response): Promise<void> {
   }
 }
 
-// ── POST /api/auth/logout ────────────────────────────────────
+// POST /api/auth/logout
 export async function logout(req: Request, res: Response): Promise<void> {
   try {
     const token = req.headers.authorization?.split(' ')[1] ?? ''
@@ -46,18 +46,17 @@ export async function logout(req: Request, res: Response): Promise<void> {
   }
 }
 
-// ── GET /api/auth/me ─────────────────────────────────────────
-// verifyToken runs before this — req.user is guaranteed
+// GET /api/auth/me
 export async function getMe(req: Request, res: Response): Promise<void> {
   try {
-    const profile = await AuthService.getMe(req.user!.id)
+    const profile = await AuthService.getMe(req.user!.id) // just to be guaranteed
     sendSuccess(res, profile)
   } catch (err) {
     sendError(res, 'Failed to fetch profile.', 500)
   }
 }
 
-// ── POST /api/auth/reset-password ───────────────────────────
+// POST /api/auth/reset-password
 export async function requestPasswordReset(req: Request, res: Response): Promise<void> {
   try {
     const parsed = ResetSchema.safeParse(req.body)
@@ -68,9 +67,8 @@ export async function requestPasswordReset(req: Request, res: Response): Promise
 
     await AuthService.requestPasswordReset(parsed.data.email)
 
-    // Always return the same response — don't reveal if email exists
-    sendSuccess(res, null, 'If that email is registered, a reset link has been sent.')
+    sendSuccess(res, null, 'If email is registered, a reset link has been sent.')
   } catch (err) {
-    sendSuccess(res, null, 'If that email is registered, a reset link has been sent.')
+    sendSuccess(res, null, 'If email is registered, a reset link has been sent.')
   }
 }
