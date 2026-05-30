@@ -4,14 +4,6 @@ import { requireRole } from '../middleware/role.middleware'
 import * as OrdersController from '../controllers/orders.controller'
 import { AuthenticatedRequest } from '../types'
 
-// WHY THE `as RequestHandler` CAST:
-//   Our controllers use AuthenticatedRequest (extends Request with
-//   req.user attached). Express Router typings expect the base
-//   Request type — it does not know about our extension.
-//   Casting to RequestHandler tells TypeScript "trust us, this is
-//   compatible" — which it is at runtime because verifyToken
-//   always runs first and attaches req.user before any controller fires.
-//
 // ROLE RULES (from SRS):
 //   GET    /orders            → all authenticated (admin, clerk, viewer)
 //   GET    /orders/summary    → all authenticated
@@ -23,8 +15,7 @@ import { AuthenticatedRequest } from '../types'
 
 const router = Router()
 
-// Dashboard summary — defined BEFORE /:id so Express does not
-// match the string "summary" as an :id parameter
+// Dashboard summary
 router.get('/summary',
   verifyToken as RequestHandler,
   OrdersController.getOrderSummary as RequestHandler

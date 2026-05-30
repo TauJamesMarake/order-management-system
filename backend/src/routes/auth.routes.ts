@@ -2,13 +2,6 @@ import { Router, RequestHandler } from 'express'
 import { verifyToken } from '../middleware/auth.middleware'
 import * as AuthController from '../controllers/auth.controller'
 
-// ─────────────────────────────────────────────────────────────
-// Auth Routes
-//
-// login and reset-password are PUBLIC — no verifyToken.
-// logout and me require a valid token.
-// ─────────────────────────────────────────────────────────────
-
 const router = Router()
 
 // Public

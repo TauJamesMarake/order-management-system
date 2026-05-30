@@ -3,17 +3,7 @@ import { z } from 'zod'
 import { sendSuccess, sendError } from '../utils/response'
 import * as UsersService from '../services/users.service'
 
-// ─────────────────────────────────────────────────────────────
-// Users Controller
-//
-// Two access patterns:
-//   Admin → full access to all user operations
-//   Clerk/Viewer → can only GET and PATCH their own profile,
-//                  and only full_name (not role or is_active)
-//
-// Ownership enforcement happens here in the controller,
-// not in the service — the service just runs the query.
-// ─────────────────────────────────────────────────────────────
+
 
 const CreateUserSchema = z.object({
     email: z.string().email('Invalid email.'),
@@ -68,8 +58,8 @@ export async function getUserById(req: Request, res: Response): Promise<void> {
         const user = await UsersService.getUserById(id)
         sendSuccess(res, user)
     } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to fetch user.'
-        sendError(res, message, message.includes('not found') ? 404 : 500)
+        console.error('[getUserById]', err)
+        sendError(res, 'Failed to fetch user.', 500)
     }
 }
 
@@ -87,10 +77,8 @@ export async function createUser(req: Request, res: Response): Promise<void> {
         sendSuccess(res, user, 'User created successfully.', 201)
     } catch (err) {
         console.error('[createUser]', err)
-        const message = err instanceof Error ? err.message : 'Failed to create user.'
-        // Supabase returns a specific message for duplicate email
-        const status = message.includes('already') ? 409 : 500
-        sendError(res, message, status)
+        // Never forward internal error details to the client
+        sendError(res, 'Failed to create user.', 500)
     }
 }
 
@@ -128,8 +116,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
         sendSuccess(res, updated, 'User updated successfully.')
     } catch (err) {
         console.error('[updateUser]', err)
-        const message = err instanceof Error ? err.message : 'Failed to update user.'
-        sendError(res, message, message.includes('not found') ? 404 : 500)
+        sendError(res, 'Failed to update user.', 500)
     }
 }
 
@@ -149,11 +136,7 @@ export async function deactivateUser(req: Request, res: Response): Promise<void>
         sendSuccess(res, user, 'User deactivated successfully.')
     } catch (err) {
         console.error('[deactivateUser]', err)
-        const message = err instanceof Error ? err.message : 'Failed to deactivate user.'
-        const status = message.includes('not found') ? 404
-            : message.includes('already') ? 400
-                : 500
-        sendError(res, message, status)
+        sendError(res, 'Failed to deactivate user.', 500)
     }
 }
 
@@ -166,10 +149,6 @@ export async function reactivateUser(req: Request, res: Response): Promise<void>
         sendSuccess(res, user, 'User reactivated successfully.')
     } catch (err) {
         console.error('[reactivateUser]', err)
-        const message = err instanceof Error ? err.message : 'Failed to reactivate user.'
-        const status = message.includes('not found') ? 404
-            : message.includes('already') ? 400
-                : 500
-        sendError(res, message, status)
+        sendError(res, 'Failed to reactivate user.', 500)
     }
 }

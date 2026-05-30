@@ -98,10 +98,6 @@ export interface OrderFilters {
   limit?: number
 }
 
-// ── Express global augmentation ──────────────────────────────
-// Augmenting Express's namespace globally means every req object
-// gets a user property without needing a cast on each handler.
-// user is optional here because it is only set AFTER verifyToken runs.
 import { Request } from 'express'
 
 declare global {

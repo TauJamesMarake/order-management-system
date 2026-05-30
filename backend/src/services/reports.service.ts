@@ -113,7 +113,7 @@ export async function buildExcelReport(
   })
   headerRow.height = 22
 
-  // ── Data rows ─────────────────────────────────────────────
+  // Data rows
   orders.forEach((order, i) => {
     const row = sheet.addRow({
       order_number: order.order_number,

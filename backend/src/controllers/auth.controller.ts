@@ -3,16 +3,10 @@ import { z } from 'zod'
 import { sendSuccess, sendError } from '../utils/response'
 import * as AuthService from '../services/auth.service'
 
-// ─────────────────────────────────────────────────────────────
-// Auth Controller
-//
-// HANDLES: Login, logout, get-me, password reset.
-// These are the only routes that DO NOT require verifyToken
-// except GET /me — because login is how you get a token.
-// ─────────────────────────────────────────────────────────────
+
 
 const LoginSchema = z.object({
-  email:    z.string().email('Invalid email address.'),
+  email: z.string().email('Invalid email address.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 })
 
@@ -34,9 +28,9 @@ export async function login(req: Request, res: Response): Promise<void> {
     sendSuccess(res, result, 'Login successful.')
   } catch (err) {
     // Use 401 for auth failures, not 500
-    const message = err instanceof Error ? err.message : 'Login failed.'
-    const status  = message.includes('Invalid email') || message.includes('deactivated') ? 401 : 500
-    sendError(res, message, status)
+    // Client-safe errors only (avoid leaking internals)
+    const status = err instanceof Error ? 401 : 500
+    sendError(res, 'Login failed.', status)
   }
 }
 
@@ -59,8 +53,7 @@ export async function getMe(req: Request, res: Response): Promise<void> {
     const profile = await AuthService.getMe(req.user!.id)
     sendSuccess(res, profile)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch profile.'
-    sendError(res, message, message.includes('not found') ? 404 : 500)
+    sendError(res, 'Failed to fetch profile.', 500)
   }
 }
 

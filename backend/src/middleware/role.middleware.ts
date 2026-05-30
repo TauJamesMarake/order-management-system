@@ -2,17 +2,6 @@ import { Request, Response, NextFunction } from 'express'
 import { UserRole } from '../types'
 import { sendError } from '../utils/response'
 
-// ─────────────────────────────────────────────────────────────
-// Role Middleware — requireRole
-//
-// Factory function — returns a middleware that checks req.user.role
-// against the allowed roles for that route.
-// Must always run AFTER verifyToken (req.user must exist).
-//
-// USAGE:
-//   router.delete('/:id', verifyToken, requireRole('admin'), handler)
-// ─────────────────────────────────────────────────────────────
-
 export function requireRole(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {

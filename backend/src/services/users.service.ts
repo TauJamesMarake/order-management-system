@@ -160,7 +160,7 @@ export async function deactivateUser(id: string): Promise<User> {
   return updated
 }
 
-// ── Reactivate ───────────────────────────────────────────────
+// Reactivate
 export async function reactivateUser(id: string): Promise<User> {
   const current = await getUserById(id)
 

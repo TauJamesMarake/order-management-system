@@ -3,15 +3,6 @@ import { verifyToken } from '../middleware/auth.middleware'
 import { requireRole } from '../middleware/role.middleware'
 import * as UsersController from '../controllers/users.controller'
 
-// ─────────────────────────────────────────────────────────────
-// Users Routes
-//
-// All routes require authentication.
-// Admin-only routes use requireRole('admin').
-// GET /:id and PATCH /:id allow any authenticated user —
-// ownership enforcement is handled inside the controller.
-// ─────────────────────────────────────────────────────────────
-
 const router = Router()
 
 // All authenticated users

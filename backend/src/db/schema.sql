@@ -150,14 +150,11 @@ CREATE POLICY "audit_select_authenticated"
 
 
 -- 8. SEED DATA
--- Step 1: Go to Supabase Dashboard > Authentication > Users > Add User
--- Step 2: Create the admin user there with their email + password
--- Step 3: Copy the UUID Supabase generates, paste it below, then run this insert
 
 INSERT INTO users (id, email, full_name, role)
 VALUES (
-  'PASTE-SUPABASE-AUTH-UUID-HERE',
-  'admin@ntsoakidistributions.co.za',
+  'cf2a3b5c-99f2-4681-a261-cd2573d1e640',
+  'admin@nd.co.za',
   'System Administrator',
   'admin'
 );
@@ -165,8 +162,9 @@ VALUES (
 
 -- 9. HELPER VIEW
 
-CREATE OR REPLACE VIEW v_orders_with_creator AS
-SELECT
+CREATE OR REPLACE VIEW v_orders_with_creator
+SET (security_invoker = on)
+AS SELECT
   o.id,
   o.order_number,
   o.client_name,
@@ -200,8 +198,3 @@ WHERE t.table_schema = 'public'
   AND t.table_type = 'BASE TABLE'
 GROUP BY t.table_name
 ORDER BY t.table_name;
-
--- Expected:
--- audit_logs  | 7
--- orders      | 12
--- users       | 6

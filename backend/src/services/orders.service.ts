@@ -32,7 +32,8 @@ export async function createOrder(
     `)
     .single()
 
-  if (error) throw new Error(`Failed to create order: ${error.message}`)
+  // Client-safe: don't expose DB error details to API consumer
+  if (error) throw new Error('Failed to create order.')
   return data as Order
 }
 
@@ -85,7 +86,7 @@ export async function getOrders(
     .order('created_at', { ascending: false })
     .range(from, to)
 
-  if (error) throw new Error(`Failed to fetch orders: ${error.message}`)
+  if (error) throw new Error('Failed to fetch orders.')
 
   const total = count ?? 0
 
@@ -149,7 +150,7 @@ export async function updateOrder(
     .single()
 
   if (error || !data) {
-    throw new Error(`Failed to update order: ${error?.message}`)
+    throw new Error('Failed to update order.')
   }
 
   return { previous, updated: data as Order }
@@ -178,7 +179,7 @@ export async function cancelOrder(id: string): Promise<Order> {
     .single()
 
   if (error || !data) {
-    throw new Error(`Failed to cancel order: ${error?.message}`)
+    throw new Error('Failed to cancel order.')
   }
 
   return data as Order
@@ -199,14 +200,14 @@ export async function getOrderSummary(): Promise<{
     .select('*', { count: 'exact', head: true })
     .gte('created_at', today.toISOString())
 
-  if (todayErr) throw new Error(`Dashboard error: ${todayErr.message}`)
+  if (todayErr) throw new Error('Failed to generate dashboard summary.')
 
   // Count per status
   const { data: statusData, error: statusErr } = await supabase
     .from('orders')
     .select('status')
 
-  if (statusErr) throw new Error(`Dashboard error: ${statusErr.message}`)
+  if (statusErr) throw new Error('Failed to generate dashboard summary.')
 
   const by_status: Record<string, number> = {
     pending: 0,
@@ -225,7 +226,7 @@ export async function getOrderSummary(): Promise<{
     .select('total_zar')
     .in('status', ['pending', 'confirmed', 'dispatched'])
 
-  if (valueErr) throw new Error(`Dashboard error: ${valueErr.message}`)
+  if (valueErr) throw new Error('Failed to generate dashboard summary.')
 
   const total_value_active_zar = (valueData ?? []).reduce(
     (sum, row) => sum + Number(row.total_zar),

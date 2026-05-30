@@ -1,6 +1,6 @@
 import { supabase } from '../db/supabase'
 
-// Generates: ND-2026-0001, ND-2026-0002, etc.
+// Generates: ND-2026-0001
 // Queries the DB for the highest order number this year and increments.
 export async function generateOrderNumber(): Promise<string> {
   const year = new Date().getFullYear()

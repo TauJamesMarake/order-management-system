@@ -3,14 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 import { UserRole } from '../types'
 import { sendError } from '../utils/response'
 
-// ─────────────────────────────────────────────────────────────
-// Auth Middleware — verifyToken
-//
-// Verifies the Bearer JWT, loads the user profile from our
-// users table, checks is_active, then stamps req.user.
-// Every protected route runs this first.
-// ─────────────────────────────────────────────────────────────
-
 const anonClient = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_ANON_KEY!
@@ -36,8 +28,7 @@ export async function verifyToken(
     }
 
     // Verify token with Supabase Auth
-    const { data: { user: authUser }, error: authError } = await anonClient
-      .auth.getUser(token)
+    const { data: { user: authUser }, error: authError } = await anonClient.auth.getUser(token)
 
     if (authError || !authUser) {
       sendError(res, 'Invalid or expired token. Please log in again.', 401)
