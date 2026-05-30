@@ -108,7 +108,7 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
       ? `_${filters.date_from}_to_${filters.date_to}`
       : `_${new Date().toISOString().slice(0, 10)}`
 
-    const filename = `ntsoaki_orders${datePart}.xlsx`
+    const filename = `oms_orders${datePart}.xlsx`
 
     // ── File streaming headers ────────────────────────────
     // Content-Type tells the browser what kind of file this is
