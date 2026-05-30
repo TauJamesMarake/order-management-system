@@ -1,44 +1,89 @@
-import { Response } from 'express'
-import { z } from 'zod'
-import { AuthenticatedRequest, OrderFilters } from '../types'
-import { sendSuccess, sendError } from '../utils/response'
-import { requireOwnerOrAdmin } from '../middleware/role.middleware'
-import * as OrdersService from '../services/orders.service'
-import * as AuditService from '../services/audit.service'
+import { Response }                        from 'express'
+import { z }                               from 'zod'
+import { AuthenticatedRequest, OrderFilters, OrderStatus } from '../types'
+import { sendSuccess, sendError }          from '../utils/response'
+import { requireOwnerOrAdmin }             from '../middleware/role.middleware'
+import * as OrdersService                  from '../services/orders.service'
+import * as AuditService                   from '../services/audit.service'
 
 /**
  * Orders Controller
  *
  * Responsibilities:
- * - Validate inputs (zod)
- * - Authorize via ownership checks (controller-level)
- * - Call service layer
- * - Return client-safe errors only (avoid leaking DB/Supabase internals)
+ *  - Validate and sanitise HTTP inputs (Zod schemas).
+ *  - Enforce ownership checks at the controller level where resource context
+ *    is required (i.e. after a DB fetch).
+ *  - Delegate all data access to the service layer.
+ *  - Return only client-safe error messages — never DB / Supabase internals.
  */
 
+/* ── Validation schemas ─────────────────────────────────────────────────── */
+
+const VALID_STATUSES: OrderStatus[] = [
+  'pending', 'confirmed', 'dispatched', 'delivered', 'cancelled',
+]
+
+/** ISO-8601 date string YYYY-MM-DD */
+const DateStringSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+  .refine(v => !isNaN(new Date(v).getTime()), 'Invalid date')
+
 const CreateOrderSchema = z.object({
-  client_name: z.string().min(2).max(255),
-  mineral_type: z.string().min(2).max(100),
-  quantity_kg: z.number().positive(),
+  client_name:    z.string().min(2).max(255),
+  mineral_type:   z.string().min(2).max(100),
+  quantity_kg:    z.number().positive(),
   unit_price_zar: z.number().positive(),
-  notes: z.string().max(1000).optional(),
+  notes:          z.string().max(1000).optional(),
 })
 
 const UpdateOrderSchema = z
   .object({
-    client_name: z.string().min(2).max(255).optional(),
-    mineral_type: z.string().min(2).max(100).optional(),
-    quantity_kg: z.number().positive().optional(),
+    client_name:    z.string().min(2).max(255).optional(),
+    mineral_type:   z.string().min(2).max(100).optional(),
+    quantity_kg:    z.number().positive().optional(),
     unit_price_zar: z.number().positive().optional(),
-    notes: z.string().max(1000).optional(),
-    status: z.enum(['pending', 'confirmed', 'dispatched', 'delivered', 'cancelled']).optional(),
+    notes:          z.string().max(1000).optional(),
+    status:         z.enum(['pending', 'confirmed', 'dispatched', 'delivered', 'cancelled']).optional(),
   })
-  .refine((data) => Object.keys(data).length > 0, {
+  .refine(data => Object.keys(data).length > 0, {
     message: 'At least one field must be provided for update.',
   })
 
-// POST /api/orders
-export async function createOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
+/* ── Shared helpers ─────────────────────────────────────────────────────── */
+
+/**
+ * Parses and validates the status query parameter.
+ *
+ * ── Fix: double-cast via `as any` removed ────────────────────────────────
+ * The original code used  `status as string | undefined as any`  which
+ * defeated the OrderStatus union type.  We now use an explicit whitelist
+ * check so TypeScript and the runtime both agree on what a valid status is.
+ */
+function parseStatusFilter(raw: unknown): OrderStatus | undefined {
+  if (typeof raw !== 'string') return undefined
+  return VALID_STATUSES.includes(raw as OrderStatus)
+    ? (raw as OrderStatus)
+    : undefined
+}
+
+/**
+ * Parses and validates a date query parameter.
+ * Returns the string if valid, undefined otherwise.
+ * The caller receives a string it can safely pass to .gte() / .lte().
+ */
+function parseDateFilter(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined
+  const result = DateStringSchema.safeParse(raw)
+  return result.success ? result.data : undefined
+}
+
+/* ── POST /api/orders ───────────────────────────────────────────────────── */
+
+export async function createOrder(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
   try {
     const parsed = CreateOrderSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -48,31 +93,47 @@ export async function createOrder(req: AuthenticatedRequest, res: Response): Pro
 
     const order = await OrdersService.createOrder(parsed.data, req.user.id)
 
-    // Audit log (if it fails it should not break order creation)
+    /* Audit log — failure must not break order creation */
     await AuditService.logOrderCreated(order.id, req.user.id, order.order_number)
 
     sendSuccess(res, order, 'Order created successfully.', 201)
   } catch (err) {
     console.error('[createOrder]', err)
-
-    // Generic client message
     const status = err instanceof Error && err.message.includes('not found') ? 404 : 500
     sendError(res, 'Failed to create order.', status)
   }
 }
 
-// GET /api/orders
-export async function getOrders(req: AuthenticatedRequest, res: Response): Promise<void> {
+/* ── GET /api/orders ────────────────────────────────────────────────────── */
+
+/**
+ * Returns a paginated, filtered list of orders.
+ *
+ * Access: all authenticated roles (admin, clerk, viewer).
+ * Viewers have read-only access to all orders — this is an intentional
+ * business decision (they are internal staff who need visibility but cannot
+ * mutate).  If per-user scoping is required in future, add a  created_by
+ * filter here conditional on role === 'viewer'.
+ *
+ * ── Fix: date and status filters validated ────────────────────────────────
+ * Raw query strings are now passed through parseDateFilter / parseStatusFilter
+ * before reaching the service layer.  Invalid values are silently ignored
+ * (treated as absent) rather than forwarded to the DB.
+ */
+export async function getOrders(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
   try {
     const filters: OrderFilters = {
-      status: req.query.status as string | undefined as any,
-      mineral_type: req.query.mineral_type as string | undefined,
-      client_name: req.query.client_name as string | undefined,
-      date_from: req.query.date_from as string | undefined,
-      date_to: req.query.date_to as string | undefined,
-      search: req.query.search as string | undefined,
-      page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
-      limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 20,
+      status:       parseStatusFilter(req.query.status),
+      mineral_type: typeof req.query.mineral_type === 'string' ? req.query.mineral_type : undefined,
+      client_name:  typeof req.query.client_name  === 'string' ? req.query.client_name  : undefined,
+      date_from:    parseDateFilter(req.query.date_from),
+      date_to:      parseDateFilter(req.query.date_to),
+      search:       typeof req.query.search === 'string' ? req.query.search : undefined,
+      page:         req.query.page  ? parseInt(req.query.page  as string, 10) : 1,
+      limit:        req.query.limit ? parseInt(req.query.limit as string, 10) : 20,
     }
 
     const result = await OrdersService.getOrders(filters)
@@ -83,8 +144,12 @@ export async function getOrders(req: AuthenticatedRequest, res: Response): Promi
   }
 }
 
-// GET /api/orders/summary
-export async function getOrderSummary(req: AuthenticatedRequest, res: Response): Promise<void> {
+/* ── GET /api/orders/summary ────────────────────────────────────────────── */
+
+export async function getOrderSummary(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
   try {
     const summary = await OrdersService.getOrderSummary()
     sendSuccess(res, summary)
@@ -94,40 +159,50 @@ export async function getOrderSummary(req: AuthenticatedRequest, res: Response):
   }
 }
 
-// GET /api/orders/:id
-export async function getOrderById(req: AuthenticatedRequest, res: Response): Promise<void> {
+/* ── GET /api/orders/:id ────────────────────────────────────────────────── */
+
+export async function getOrderById(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
   try {
     const { id } = req.params
-    const order = await OrdersService.getOrderById(id)
+    const order  = await OrdersService.getOrderById(id)
     sendSuccess(res, order)
   } catch (err) {
     console.error('[getOrderById]', err)
-
     const status = err instanceof Error && err.message.includes('not found') ? 404 : 500
     sendError(res, 'Failed to fetch order.', status)
   }
 }
 
-// GET /api/orders/:id/audit
-export async function getOrderAuditLog(req: AuthenticatedRequest, res: Response): Promise<void> {
+/* ── GET /api/orders/:id/audit ──────────────────────────────────────────── */
+
+export async function getOrderAuditLog(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
   try {
     const { id } = req.params
 
-    // Confirm order exists first
+    /* Confirm order exists before fetching the audit trail */
     await OrdersService.getOrderById(id)
 
     const logs = await AuditService.getAuditLogsForOrder(id)
     sendSuccess(res, logs)
   } catch (err) {
     console.error('[getOrderAuditLog]', err)
-
     const status = err instanceof Error && err.message.includes('not found') ? 404 : 500
     sendError(res, 'Failed to fetch audit log.', status)
   }
 }
 
-// PATCH /api/orders/:id
-export async function updateOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
+/* ── PATCH /api/orders/:id ──────────────────────────────────────────────── */
+
+export async function updateOrder(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
   try {
     const { id } = req.params
 
@@ -139,10 +214,10 @@ export async function updateOrder(req: AuthenticatedRequest, res: Response): Pro
 
     const current = await OrdersService.getOrderById(id)
 
-    // Ownership enforcement
+    /* Ownership check — admin can edit any order; clerk only their own */
     if (!requireOwnerOrAdmin(req, res, current.created_by)) return
 
-    // Business rules
+    /* Business rule guards */
     if (current.status === 'cancelled') {
       sendError(res, 'Cancelled orders cannot be edited.', 400)
       return
@@ -160,14 +235,17 @@ export async function updateOrder(req: AuthenticatedRequest, res: Response): Pro
     sendSuccess(res, updated, 'Order updated successfully.')
   } catch (err) {
     console.error('[updateOrder]', err)
-
     const status = err instanceof Error && err.message.includes('not found') ? 404 : 500
     sendError(res, 'Failed to update order.', status)
   }
 }
 
-// PATCH /api/orders/:id/cancel
-export async function cancelOrder(req: AuthenticatedRequest, res: Response): Promise<void> {
+/* ── PATCH /api/orders/:id/cancel ───────────────────────────────────────── */
+
+export async function cancelOrder(
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> {
   try {
     const { id } = req.params
 
@@ -182,15 +260,12 @@ export async function cancelOrder(req: AuthenticatedRequest, res: Response): Pro
     sendSuccess(res, cancelled, 'Order cancelled successfully.')
   } catch (err) {
     console.error('[cancelOrder]', err)
-
     const status =
       err instanceof Error && err.message.includes('not found')
         ? 404
         : err instanceof Error && err.message.includes('Delivered')
           ? 400
           : 500
-
     sendError(res, 'Failed to cancel order.', status)
   }
 }
-
