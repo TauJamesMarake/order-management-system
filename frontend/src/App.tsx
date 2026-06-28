@@ -2,7 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { Dashboard } from '@/pages/Dashboard'
 import { OrdersPage } from '@/pages/Orders'
-// import { Reports } from '@/pages/Reports'
+import { Reports } from '@/pages/Reports'
+
 import { useAuthStore } from '@/stores/auth.store'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -33,14 +34,14 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      {/* <Route
+      <Route
         path="/reports"
         element={
           <ProtectedRoute>
             <Reports />
           </ProtectedRoute>
         }
-      /> */}
+      />
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
