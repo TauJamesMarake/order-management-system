@@ -109,6 +109,7 @@ export function TopBar({
         zIndex: 40,
         boxShadow: '0 4px 20px rgba(14, 31, 31, 0.23)',
         borderBottom: `1px solid ${T.mutedCream}60`,
+        borderTopLeftRadius: 28,
       }}
     >
       <div>
@@ -130,13 +131,35 @@ export function TopBar({
               Operational control panel
             </p>
           </div>
-        ) : (
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
-              {title}
-            </h1>
-          </div>
-        )}
+        )
+          : title.toLowerCase() === 'orders' ? (
+            <div>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
+                Orders
+              </h1>
+              <p style={{ margin: 0, fontSize: 12, color: T.inkGhost, fontWeight: 500 }}>
+                Operational control panel
+              </p>
+            </div>
+          ) :
+            title.toLowerCase() === 'reports' ? (
+              <div>
+                <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
+                  Reports
+                </h1>
+                <p style={{ margin: 0, fontSize: 12, color: T.inkGhost, fontWeight: 500 }}>
+                  {new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+            )
+              : (
+                <div>
+                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
+                    {title}
+                  </h1>
+                </div>
+              )
+        }
       </div>
 
       <div style={{ position: 'relative', width: '38%', maxWidth: 460 }}>
