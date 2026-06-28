@@ -1,5 +1,5 @@
 import { Response } from 'express'
-import { ApiSuccess, ApiError } from '../types'
+import { iApiSuccess, iApiError } from '../types'
 
 export function sendSuccess<T>(
   res: Response,
@@ -7,7 +7,7 @@ export function sendSuccess<T>(
   message?: string,
   statusCode = 200
 ): Response {
-  const body: ApiSuccess<T> = { success: true, data, ...(message && { message }) }
+  const body: iApiSuccess<T> = { success: true, data, ...(message && { message }) }
   return res.status(statusCode).json(body)
 }
 
@@ -17,6 +17,6 @@ export function sendError(
   statusCode = 500,
   details?: Record<string, unknown> | unknown[]
 ): Response {
-  const body: ApiError = { success: false, error, ...(details && { details }) }
+  const body: iApiError = { success: false, error, ...(details && { details }) }
   return res.status(statusCode).json(body)
 }

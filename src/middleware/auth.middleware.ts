@@ -1,12 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
 import { createClient } from '@supabase/supabase-js'
-import { supabase } from '../db/supabase'    /* moved to top-level import */
+import { supabase } from '../db/supabase'
 import { UserRole } from '../types'
 import { sendError } from '../utils/response'
 
-/**
- * Anon client — used only to verify the incoming JWT.
- */
 const supabaseUrl = process.env.SUPABASE_URL
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
 
@@ -36,7 +33,7 @@ export async function verifyToken(
   try {
     const authHeader = req.headers.authorization
 
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader?.startsWith('Bearer ')) {
       sendError(res, 'No token provided. Include Authorization: Bearer <token>', 401)
       return
     }

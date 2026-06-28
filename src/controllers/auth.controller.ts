@@ -28,9 +28,8 @@ export async function login(req: Request, res: Response): Promise<void> {
     sendSuccess(res, result, 'Login successful.')
   } catch (err) {
     // Use 401 for auth failures, not 500
-    // Client-safe errors only (avoid leaking internals)
     const status = err instanceof Error ? 401 : 500
-    sendError(res, 'Login failed.', status)
+    sendError(res, 'Login failed. Check internet connectivity.', status)
   }
 }
 

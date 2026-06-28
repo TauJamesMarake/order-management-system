@@ -119,7 +119,6 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/reports', reportRoutes)
 
-/* Export-specific limiter applied directly to the export sub-paths */
 app.use('/api/reports/export', exportLimiter)
 
 /* 404 */

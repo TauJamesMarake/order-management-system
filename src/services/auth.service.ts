@@ -113,8 +113,6 @@ export async function logout(token: string): Promise<void> {
   const { error } = await userClient.auth.signOut()
 
   if (error) {
-    /* Log but do not throw — the frontend should clear its local token
-     * regardless of whether the server-side revocation succeeded. */
     console.error('[AuthService] Logout error:', error.message)
   }
 }
