@@ -1,18 +1,44 @@
 import { supabase } from '../db/supabase'
 import { generateOrderNumber } from '../utils/orderNumber'
 import {
-  Order,
-  CreateOrderDTO,
-  UpdateOrderDTO,
-  OrderFilters,
-  PaginatedResult,
+  iOrder,
+  iCreateOrderDTO,
+  iUpdateOrderDTO,
+  iOrderFilters,
+  iPaginatedResult,
 } from '../types'
 
-// Create
+/**
+ * Orders Service
+ *
+ * All direct database operations for the orders domain.
+ * The controller handles HTTP concerns (validation, auth); this layer
+ * handles only data access and business rules.
+ */
+
+/* Input sanitisation helpers */
+function sanitiseLike(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')   /* backslash must come first */
+    .replace(/%/g, '\\%')    /* percent wildcard */
+    .replace(/_/g, '\\_')    /* single-char wildcard */
+    .trim()
+}
+
+/*
+ * Returns true when the value is a valid ISO-8601 date string (YYYY-MM-DD).
+ */
+export function isValidDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const d = new Date(value)
+  return !isNaN(d.getTime())
+}
+
+/* Create */
 export async function createOrder(
-  dto: CreateOrderDTO,
+  dto: iCreateOrderDTO,
   createdById: string
-): Promise<Order> {
+): Promise<iOrder> {
   const order_number = await generateOrderNumber()
 
   const { data, error } = await supabase
@@ -32,36 +58,37 @@ export async function createOrder(
     `)
     .single()
 
-  // Client-safe: don't expose DB error details to API consumer
+  /* Never expose DB error details to the API consumer */
   if (error) throw new Error('Failed to create order.')
-  return data as Order
+
+  return data as iOrder
 }
 
-// Get many (with filters + pagination)
+/* Get many (with filters + pagination) */
+
 export async function getOrders(
-  filters: OrderFilters
-): Promise<PaginatedResult<Order>> {
+  filters: iOrderFilters
+): Promise<iPaginatedResult<iOrder>> {
   const page = Math.max(1, filters.page ?? 1)
   const limit = Math.min(100, Math.max(1, filters.limit ?? 20))
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  // Start query from the view which already joins creator details
   let query = supabase
     .from('v_orders_with_creator')
     .select('*', { count: 'exact' })
 
-  // Apply filters
+  /* Apply filters (sanitised) */
   if (filters.status) {
     query = query.eq('status', filters.status)
   }
 
   if (filters.mineral_type) {
-    query = query.ilike('mineral_type', `%${filters.mineral_type}%`)
+    query = query.ilike('mineral_type', `%${sanitiseLike(filters.mineral_type)}%`)
   }
 
   if (filters.client_name) {
-    query = query.ilike('client_name', `%${filters.client_name}%`)
+    query = query.ilike('client_name', `%${sanitiseLike(filters.client_name)}%`)
   }
 
   if (filters.date_from) {
@@ -69,19 +96,18 @@ export async function getOrders(
   }
 
   if (filters.date_to) {
-    // Include the full end day by going to end of that day
+    /* Include the full end day by going to end-of-day */
     query = query.lte('created_at', `${filters.date_to}T23:59:59.999Z`)
   }
 
-  // Search across order_number and client_name
   if (filters.search) {
-    const term = filters.search.trim()
+    const term = sanitiseLike(filters.search)
     query = query.or(
       `order_number.ilike.%${term}%,client_name.ilike.%${term}%`
     )
   }
 
-  // Pagination + ordering
+  /* Pagination + ordering */
   const { data, error, count } = await query
     .order('created_at', { ascending: false })
     .range(from, to)
@@ -91,7 +117,7 @@ export async function getOrders(
   const total = count ?? 0
 
   return {
-    items: (data ?? []) as Order[],
+    items: (data ?? []) as iOrder[],
     total,
     page,
     limit,
@@ -99,8 +125,8 @@ export async function getOrders(
   }
 }
 
-// Get one
-export async function getOrderById(id: string): Promise<Order> {
+/* Get one */
+export async function getOrderById(id: string): Promise<iOrder> {
   const { data, error } = await supabase
     .from('orders')
     .select(`
@@ -111,23 +137,24 @@ export async function getOrderById(id: string): Promise<Order> {
     .single()
 
   if (error || !data) {
-    throw new Error(`Order not found.`)
+    throw new Error('Order not found.')
   }
 
-  return data as Order
+  return data as iOrder
 }
 
-// Update
-// Returns both the old order (for audit) and the updated order.
+/* Update
+ * Returns both the old order (for audit log comparison) and the updated order.
+ */
 export async function updateOrder(
   id: string,
-  dto: UpdateOrderDTO
-): Promise<{ previous: Order; updated: Order }> {
-  // Fetch current state first — needed for audit log comparison
+  dto: iUpdateOrderDTO
+): Promise<{ previous: iOrder; updated: iOrder }> {
+  /* Fetch current state first for the audit log */
   const previous = await getOrderById(id)
 
-  // Build the update payload — only include fields actually provided
-  const payload: Partial<UpdateOrderDTO> = {}
+  /* Build the update payload with only the fields provided */
+  const payload: Partial<iUpdateOrderDTO> = {}
   if (dto.client_name !== undefined) payload.client_name = dto.client_name.trim()
   if (dto.mineral_type !== undefined) payload.mineral_type = dto.mineral_type.trim()
   if (dto.quantity_kg !== undefined) payload.quantity_kg = dto.quantity_kg
@@ -153,11 +180,11 @@ export async function updateOrder(
     throw new Error('Failed to update order.')
   }
 
-  return { previous, updated: data as Order }
+  return { previous, updated: data as iOrder }
 }
 
-// Cancel (soft delete)
-export async function cancelOrder(id: string): Promise<Order> {
+/* Cancel (soft delete) */
+export async function cancelOrder(id: string): Promise<iOrder> {
   const current = await getOrderById(id)
 
   if (current.status === 'cancelled') {
@@ -182,10 +209,10 @@ export async function cancelOrder(id: string): Promise<Order> {
     throw new Error('Failed to cancel order.')
   }
 
-  return data as Order
+  return data as iOrder
 }
 
-// Dashboard summary
+/* Dashboard summary */
 export async function getOrderSummary(): Promise<{
   total_today: number
   by_status: Record<string, number>
@@ -194,7 +221,7 @@ export async function getOrderSummary(): Promise<{
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Orders created today
+  /* Orders created today */
   const { count: total_today, error: todayErr } = await supabase
     .from('orders')
     .select('*', { count: 'exact', head: true })
@@ -202,7 +229,7 @@ export async function getOrderSummary(): Promise<{
 
   if (todayErr) throw new Error('Failed to generate dashboard summary.')
 
-  // Count per status
+  /* Count per status */
   const { data: statusData, error: statusErr } = await supabase
     .from('orders')
     .select('status')
@@ -220,7 +247,7 @@ export async function getOrderSummary(): Promise<{
     by_status[row.status] = (by_status[row.status] ?? 0) + 1
   }
 
-  // Total amount value of non-cancelled, non-delivered orders
+  /* Total monetary value of non-cancelled, non-delivered orders */
   const { data: valueData, error: valueErr } = await supabase
     .from('orders')
     .select('total_zar')

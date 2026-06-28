@@ -21,6 +21,6 @@ process.on('SIGTERM', () => {
 })
 
 process.on('SIGINT', () => {
-  console.log('\nSIGINT received, shutting down...')
+  console.log('\nSIGIN received, shutting down...')
   server.close(() => process.exit(0))
 })

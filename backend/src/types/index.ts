@@ -1,6 +1,8 @@
+import { Request } from 'express'
+
 export type UserRole = 'admin' | 'clerk' | 'viewer'
 
-export interface User {
+export interface iUser {
   id: string
   email: string
   full_name: string
@@ -9,7 +11,7 @@ export interface User {
   created_at: string
 }
 
-// Order
+/* Order */
 export type OrderStatus =
   | 'pending'
   | 'confirmed'
@@ -17,7 +19,7 @@ export type OrderStatus =
   | 'delivered'
   | 'cancelled'
 
-export interface Order {
+export interface iOrder {
   id: string
   order_number: string
   client_name: string
@@ -30,10 +32,10 @@ export interface Order {
   created_by: string
   created_at: string
   updated_at: string
-  creator?: Pick<User, 'id' | 'full_name' | 'email'>
+  creator?: Pick<iUser, 'id' | 'full_name' | 'email'>
 }
 
-export interface CreateOrderDTO {
+export interface iCreateOrderDTO {
   client_name: string
   mineral_type: string
   quantity_kg: number
@@ -41,7 +43,7 @@ export interface CreateOrderDTO {
   notes?: string
 }
 
-export interface UpdateOrderDTO {
+export interface iUpdateOrderDTO {
   client_name?: string
   mineral_type?: string
   quantity_kg?: number
@@ -50,8 +52,8 @@ export interface UpdateOrderDTO {
   status?: OrderStatus
 }
 
-// Audit Log
-export interface AuditLog {
+/* Audit Log */
+export interface iAuditLog {
   id: string
   order_id: string
   changed_by: string
@@ -59,26 +61,26 @@ export interface AuditLog {
   old_value: string | null
   new_value: string | null
   changed_at: string
-  changer?: Pick<User, 'id' | 'full_name' | 'email'>
+  changer?: Pick<iUser, 'id' | 'full_name' | 'email'>
 }
 
-// API Responses
-export interface ApiSuccess<T> {
+/* API response shapes */
+export interface iApiSuccess<T> {
   success: true
   data: T
   message?: string
 }
 
-export interface ApiError {
+export interface iApiError {
   success: false
   error: string
   details?: unknown
 }
 
-export type ApiResponse<T> = ApiSuccess<T> | ApiError
+export type ApiResponse<T> = iApiSuccess<T> | iApiError
 
-// Pagination
-export interface PaginatedResult<T> {
+/* Pagination */
+export interface iPaginatedResult<T> {
   items: T[]
   total: number
   page: number
@@ -86,20 +88,21 @@ export interface PaginatedResult<T> {
   totalPages: number
 }
 
-// Order Filters
-export interface OrderFilters {
+/* Order Filters */
+export interface iOrderFilters {
   status?: OrderStatus
   mineral_type?: string
   client_name?: string
+  /** ISO-8601 date string YYYY-MM-DD — validated before use */
   date_from?: string
+  /** ISO-8601 date string YYYY-MM-DD — validated before use */
   date_to?: string
   search?: string
   page?: number
   limit?: number
 }
 
-import { Request } from 'express'
-
+/* Express Request augmentation */
 declare global {
   namespace Express {
     interface Request {
@@ -112,10 +115,7 @@ declare global {
   }
 }
 
-// AuthenticatedRequest keeps user non-optional.
-// Use it only in middleware signatures (auth + role) where
-// you want TypeScript to enforce that user is guaranteed present.
-export interface AuthenticatedRequest extends Request {
+export interface iAuthenticatedRequest extends Request {
   user: {
     id: string
     email: string

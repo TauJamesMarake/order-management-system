@@ -22,7 +22,6 @@ export function requireRole(...allowedRoles: UserRole[]) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
 // requireOwnerOrAdmin
 //
 // Controller-level check (not route-level) because ownership
@@ -32,7 +31,6 @@ export function requireRole(...allowedRoles: UserRole[]) {
 // USAGE (inside a controller):
 //   const order = await getOrderById(id)
 //   if (!requireOwnerOrAdmin(req, res, order.created_by)) return
-// ─────────────────────────────────────────────────────────────
 
 export function requireOwnerOrAdmin(
   req: Request,
@@ -45,7 +43,7 @@ export function requireOwnerOrAdmin(
   }
 
   const isAdmin = req.user.role === 'admin'
-  const isOwner = req.user.id   === resourceOwnerId
+  const isOwner = req.user.id === resourceOwnerId
 
   if (!isAdmin && !isOwner) {
     sendError(res, 'Access denied. You can only modify your own orders.', 403)

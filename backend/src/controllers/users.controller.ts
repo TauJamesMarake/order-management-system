@@ -3,8 +3,6 @@ import { z } from 'zod'
 import { sendSuccess, sendError } from '../utils/response'
 import * as UsersService from '../services/users.service'
 
-
-
 const CreateUserSchema = z.object({
     email: z.string().email('Invalid email.'),
     password: z.string().min(8, 'Password must be at least 8 characters.'),
@@ -18,17 +16,24 @@ const AdminUpdateSchema = z.object({
     is_active: z.boolean().optional(),
 }).refine(d => Object.keys(d).length > 0, { message: 'At least one field required.' })
 
-// Self-update: only full_name is allowed — no role or is_active
+/**
+ * Self-update schema, only full_name is allowed.
+ * Role and is_active are intentionally absent to prevent privilege escalation.
+ */
 const SelfUpdateSchema = z.object({
     full_name: z.string().min(2).max(255),
 })
 
-// ── GET /api/users ───────────────────────────────────────────
-// Admin only — enforced in route, not here
+// Inferred types (single source of truth)
+type CreateUserPayload = z.infer<typeof CreateUserSchema>
+type AdminUpdatePayload = z.infer<typeof AdminUpdateSchema>
+
+// GET /api/users
+// Admin only
 export async function getUsers(req: Request, res: Response): Promise<void> {
     try {
         const filters = {
-            role: req.query.role as string | undefined as any,
+            role: req.query.role as any,
             is_active: req.query.is_active !== undefined
                 ? req.query.is_active === 'true'
                 : undefined,
@@ -42,14 +47,17 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
     }
 }
 
-// ── GET /api/users/:id ───────────────────────────────────────
-// Admin: any user. Clerk/Viewer: own profile only.
+// GET /api/users/:id
+
+/**
+ * Admin: can fetch any user.
+ * Clerk / Viewer: own profile only.
+ */
 export async function getUserById(req: Request, res: Response): Promise<void> {
     try {
         const { id } = req.params
         const requestingUser = req.user!
 
-        // Non-admins can only view their own profile
         if (requestingUser.role !== 'admin' && requestingUser.id !== id) {
             sendError(res, 'Access denied. You can only view your own profile.', 403)
             return
@@ -63,8 +71,8 @@ export async function getUserById(req: Request, res: Response): Promise<void> {
     }
 }
 
-// ── POST /api/users ──────────────────────────────────────────
-// Admin only — enforced in route
+// POST /api/users
+// Admin only
 export async function createUser(req: Request, res: Response): Promise<void> {
     try {
         const parsed = CreateUserSchema.safeParse(req.body)
@@ -73,18 +81,22 @@ export async function createUser(req: Request, res: Response): Promise<void> {
             return
         }
 
-        const user = await UsersService.createUser(parsed.data)
+        /* Type is now inferred from schema, no separate interface needed */
+        const dto: CreateUserPayload = parsed.data
+
+        const user = await UsersService.createUser(dto)
         sendSuccess(res, user, 'User created successfully.', 201)
     } catch (err) {
         console.error('[createUser]', err)
-        // Never forward internal error details to the client
         sendError(res, 'Failed to create user.', 500)
     }
 }
 
-// ── PATCH /api/users/:id ─────────────────────────────────────
-// Admin: can update full_name, role, is_active
-// Self (clerk/viewer): can only update full_name
+// PATCH /api/users/:id
+/**
+ * Admin: can update full_name, role, is_active.
+ * Clerk / Viewer (self only): can update full_name only.
+ */
 export async function updateUser(req: Request, res: Response): Promise<void> {
     try {
         const { id } = req.params
@@ -92,13 +104,12 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
         const isAdmin = requestingUser.role === 'admin'
         const isSelf = requestingUser.id === id
 
-        // Non-admins cannot modify other users
         if (!isAdmin && !isSelf) {
             sendError(res, 'Access denied. You can only update your own profile.', 403)
             return
         }
 
-        // Non-admins use restricted schema — only full_name allowed
+        /* Non-admins use the restricted schema */
         const schema = isAdmin ? AdminUpdateSchema : SelfUpdateSchema
         const parsed = schema.safeParse(req.body)
         if (!parsed.success) {
@@ -106,9 +117,11 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
             return
         }
 
-        // Extra guard: non-admin cannot sneak in role or is_active
-        // even if the schema somehow passed (defence in depth)
-        const safePayload = isAdmin
+        /*
+         * Defence-in-depth: even if the schema somehow admitted extra fields,
+         * non-admin callers can only reach updateUser with full_name.
+         */
+        const safePayload: AdminUpdatePayload = isAdmin
             ? parsed.data
             : { full_name: (parsed.data as { full_name: string }).full_name }
 
@@ -120,13 +133,13 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
     }
 }
 
-// ── PATCH /api/users/:id/deactivate ─────────────────────────
-// Admin only — enforced in route
+// PATCH /api/users/:id/deactivate
+// Admin only
 export async function deactivateUser(req: Request, res: Response): Promise<void> {
     try {
         const { id } = req.params
 
-        // Prevent admin from deactivating themselves
+        /* Prevent an admin from locking themselves out */
         if (req.user!.id === id) {
             sendError(res, 'You cannot deactivate your own account.', 400)
             return
@@ -140,8 +153,9 @@ export async function deactivateUser(req: Request, res: Response): Promise<void>
     }
 }
 
-// ── PATCH /api/users/:id/reactivate ─────────────────────────
-// Admin only — enforced in route
+// PATCH /api/users/:id/reactivate
+
+// Admin only
 export async function reactivateUser(req: Request, res: Response): Promise<void> {
     try {
         const { id } = req.params

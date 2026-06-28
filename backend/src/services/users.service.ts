@@ -1,45 +1,48 @@
 import { supabase } from '../db/supabase'
 import { createClient } from '@supabase/supabase-js'
-import { User, UserRole } from '../types'
+import { iUser, UserRole } from '../types'
 
-// ─────────────────────────────────────────────────────────────
-// Users Service
-//
-// RESPONSIBILITY:
-//   All database operations for user accounts.
-//   Creating a user touches two systems:
-//     1. Supabase Auth — for credentials + JWT capability
-//     2. Our users table — for role, name, is_active
-//   Updating only touches our users table.
-//   Supabase Auth handles password changes via its own flow.
-// ─────────────────────────────────────────────────────────────
+/*
+Users Service
 
-// Admin client — needed to create Auth users server-side
-// without sending a confirmation email
+RESPONSIBILITY:
+  All database operations for user accounts.
+  Creating a user touches two systems:
+    1. Supabase Auth — for credentials + JWT capability
+    2. Our users table — for role, name, is_active
+  Updating only touches our users table.
+  Supabase Auth handles password changes via its own flow.
+*/
+
+/*
+Admin client — needed to create Auth users server-side
+without sending a confirmation email
+*/
 const adminAuthClient = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 )
 
-// ── Create ───────────────────────────────────────────────────
-// Two-phase: Auth account first, then profile row.
-// If the profile insert fails, we clean up the Auth account
-// so we don't leave an orphaned auth user with no profile.
+/* CREATE
+ Two-phase: Auth account first, then profile row.
+ If the profile insert fails, Auth account is cleaned up
+ so we don't leave an orphaned auth user with no profile.
+*/
 export async function createUser(dto: {
-  email:     string
-  password:  string
+  email: string
+  password: string
   full_name: string
-  role:      UserRole
-}): Promise<User> {
+  role: UserRole
+}): Promise<iUser> {
   // Phase 1: Create Supabase Auth account
   const { data: authData, error: authError } = await adminAuthClient
     .auth
     .admin
     .createUser({
-      email:             dto.email,
-      password:          dto.password,
-      email_confirm:     true, // skip confirmation email — admin is creating the account
+      email: dto.email,
+      password: dto.password,
+      email_confirm: true, // skip confirmation email since admin is creating the account
     })
 
   if (authError || !authData.user) {
@@ -52,10 +55,10 @@ export async function createUser(dto: {
   const { data: profile, error: profileError } = await supabase
     .from('users')
     .insert({
-      id:        authUserId,   // must match Supabase Auth UUID
-      email:     dto.email,
+      id: authUserId,   // must match Supabase Auth UUID
+      email: dto.email,
       full_name: dto.full_name,
-      role:      dto.role,
+      role: dto.role,
     })
     .select()
     .single()
@@ -66,14 +69,14 @@ export async function createUser(dto: {
     throw new Error(`Failed to create user profile: ${profileError?.message}`)
   }
 
-  return profile as User
+  return profile as iUser
 }
 
-// ── Get all users ────────────────────────────────────────────
+// Get all users
 export async function getUsers(filters?: {
-  role?:      UserRole
+  role?: UserRole
   is_active?: boolean
-}): Promise<User[]> {
+}): Promise<iUser[]> {
   let query = supabase
     .from('users')
     .select('*')
@@ -91,11 +94,11 @@ export async function getUsers(filters?: {
   const { data, error } = await query
 
   if (error) throw new Error(`Failed to fetch users: ${error.message}`)
-  return (data ?? []) as User[]
+  return (data ?? []) as iUser[]
 }
 
-// ── Get one ──────────────────────────────────────────────────
-export async function getUserById(id: string): Promise<User> {
+// Get one
+export async function getUserById(id: string): Promise<iUser> {
   const { data, error } = await supabase
     .from('users')
     .select('*')
@@ -103,25 +106,27 @@ export async function getUserById(id: string): Promise<User> {
     .single()
 
   if (error || !data) throw new Error('User not found.')
-  return data as User
+  return data as iUser
 }
 
-// ── Update profile ───────────────────────────────────────────
-// Admin can update any field including role.
-// A clerk updating their own profile can only change full_name.
-// The controller enforces this distinction — service just updates.
+/*
+UPDATE PROFILE
+Admin can update any field including role.
+A clerk updating their own profile can only change full_name.
+The controller enforces this distinction — service just updates.
+*/
 export async function updateUser(
   id: string,
   dto: {
     full_name?: string
-    role?:      UserRole
+    role?: UserRole
     is_active?: boolean
   }
-): Promise<User> {
+): Promise<iUser> {
   // Build payload from only the provided fields
   const payload: Partial<typeof dto> = {}
   if (dto.full_name !== undefined) payload.full_name = dto.full_name.trim()
-  if (dto.role      !== undefined) payload.role      = dto.role
+  if (dto.role !== undefined) payload.role = dto.role
   if (dto.is_active !== undefined) payload.is_active = dto.is_active
 
   if (Object.keys(payload).length === 0) {
@@ -139,14 +144,16 @@ export async function updateUser(
     throw new Error(`Failed to update user: ${error?.message}`)
   }
 
-  return data as User
+  return data as iUser
 }
 
-// ── Deactivate (soft delete) ─────────────────────────────────
-// Never hard-delete users — orders reference them via FK.
-// Deactivation blocks login (verifyToken checks is_active).
-// The Supabase Auth account is also banned so the JWT is rejected.
-export async function deactivateUser(id: string): Promise<User> {
+/*
+DEACTIVATE (soft delete)
+Never hard-delete users — orders reference them via FK.
+Deactivation blocks login (verifyToken checks is_active).
+The Supabase Auth account is also banned so the JWT is rejected.
+*/
+export async function deactivateUser(id: string): Promise<iUser> {
   const current = await getUserById(id)
 
   if (!current.is_active) {
@@ -160,8 +167,8 @@ export async function deactivateUser(id: string): Promise<User> {
   return updated
 }
 
-// Reactivate
-export async function reactivateUser(id: string): Promise<User> {
+// REACTIVATE
+export async function reactivateUser(id: string): Promise<iUser> {
   const current = await getUserById(id)
 
   if (current.is_active) {
