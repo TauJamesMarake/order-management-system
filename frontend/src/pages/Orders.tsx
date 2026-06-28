@@ -7,6 +7,8 @@ import { useAuthStore } from '@/stores/auth.store'
 import type { Order, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus } from '@/types'
 import { TopBar } from '@/components/TopBar'
 import { SideBar } from '@/components/SideBar'
+import { Settings } from '@/components/Settings'
+
 import { T } from '@/components/ColorPalette'
 import { CalendarWidget } from '@/components/Calendar'
 
@@ -85,6 +87,8 @@ export function OrdersPage() {
   const [activePage, setActivePage] = useState('orders')
   const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
 
   useEffect(() => {
     if (!user) navigate('/login', { replace: true })
@@ -134,8 +138,10 @@ export function OrdersPage() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
-      <SideBar activePage={activePage} />
-
+      <SideBar activePage={activePage} onSettingsClick={() => setIsSettingsOpen(true)} />
+      {isSettingsOpen && (
+        <Settings onClose={() => setIsSettingsOpen(false)} />
+      )}
 
       {/* CORE FRAME MAIN COLUMN */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>

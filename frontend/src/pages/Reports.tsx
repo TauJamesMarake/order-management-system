@@ -10,7 +10,7 @@ import {
   BarChart,
   Bar,
   XAxis,
-  YAxis, 
+  YAxis,
   CartesianGrid,
   Legend,
 } from 'recharts'
@@ -19,6 +19,8 @@ import { get } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth.store'
 import { TopBar } from '@/components/TopBar'
 import { SideBar } from '@/components/SideBar'
+import { Settings } from '@/components/Settings'
+
 import { T } from '@/components/ColorPalette'
 
 /**
@@ -77,6 +79,8 @@ export function Reports() {
   const { user } = useAuthStore()
   const [activePage] = useState('reports')
   const [isExporting, setIsExporting] = useState<string | null>(null)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
 
   /**
    * Evaluates authentication token presence or updates redirection target context on check failure.
@@ -124,8 +128,12 @@ export function Reports() {
     return (
       <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
         <SideBar activePage={activePage} />
+        {isSettingsOpen && (
+          <Settings onClose={() => setIsSettingsOpen(false)} />
+        )}
+
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <TopBar title="Access Restrained" searchValue="" onSearchChange={() => { }} />
+          <TopBar title="Access Denied" searchValue="" onSearchChange={() => { }} />
           <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
             <div
               style={{
@@ -133,15 +141,18 @@ export function Reports() {
                 borderRadius: 20,
                 padding: 48,
                 textAlign: 'center',
+                alignItems: 'center',
                 maxWidth: 480,
                 boxShadow: '0 4px 20px rgba(14,31,31,0.40)',
                 border: `1px solid ${T.mutedCream}`,
               }}
             >
-              <LockIcon />
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: 64, height: 64, margin: '0 auto' }}>
+                <LockIcon />
+              </div>
               <h2 style={{ margin: '16px 0 8px', color: T.rust, fontSize: 20, fontWeight: 700 }}>Administrative Clearance Required</h2>
               <p style={{ margin: 0, color: T.inkSecondary, fontSize: 14, lineHeight: 1.5 }}>
-                Your active tenant configuration profile scope ({user.role}) possesses insufficient authority attributes to aggregate live operational analytics parameters.
+                Your profile scope ({user.role}) possesses insufficient authority attributes to aggregate live operational analytics parameters.
               </p>
             </div>
           </main>
@@ -150,11 +161,6 @@ export function Reports() {
     )
   }
 
-  /**
-   * @function handleExport
-   * @description Directs browser content target streams towards file generation pipeline modules.
-   * @param {'excel' | 'pdf'} format - Binary presentation codec selection framework context.
-   */
   const handleExport = async (format: 'excel' | 'pdf') => {
     try {
       setIsExporting(format)
@@ -169,6 +175,7 @@ export function Reports() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <SideBar activePage={activePage} />
+
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <TopBar title="reports" searchValue="" onSearchChange={() => { }} />
@@ -373,7 +380,7 @@ export function Reports() {
               </>
             )}
           </div>
-          
+
         </main>
       </div>
     </div>

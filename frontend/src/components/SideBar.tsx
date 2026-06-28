@@ -1,8 +1,8 @@
-import type React from 'react'
-
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth.store'
 import { T } from '@/components/ColorPalette'
+import { Settings } from '@/components/Settings'
 
 // Icons are duplicated from Dashboard/Orders to keep this component self-contained.
 function DashIcon({ color }: { color: string }) {
@@ -51,16 +51,6 @@ function SettingsIcon({ color }: { color: string }) {
         </svg>
     )
 }
-function LogoutIcon({ color }: { color: string }) {
-    return (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-        </svg>
-    )
-}
-
 
 type NavId = 'dashboard' | 'orders' | 'reports' | 'users'
 
@@ -71,9 +61,10 @@ const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: strin
     { id: 'users', label: 'Users', icon: UserIcon },
 ]
 
-export function SideBar({ activePage }: { activePage: string }) {
+export function SideBar({ activePage }: { activePage: string}) {
     const navigate = useNavigate()
-    const { user, clearAuth } = useAuthStore()
+    const { clearAuth } = useAuthStore()
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
 
 
@@ -148,51 +139,31 @@ export function SideBar({ activePage }: { activePage: string }) {
 
             <div style={{ padding: '20px 16px', borderTop: `1px solid ${T.charcoal}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <button
+                    onClick={() => setIsSettingsOpen(true)}
                     style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: 14,
                         padding: '12px 18px',
                         borderRadius: 16,
-                        backgroundColor: 'transparent',
+                        backgroundColor: isSettingsOpen ? T.deepTeal : T.charcoal,
                         border: 'none',
                         width: '100%',
                         textAlign: 'left',
                         cursor: 'pointer',
-                        color: T.inkGhost,
+                        color: isSettingsOpen ? T.white : T.inkGhost,
                         transition: 'all 0.2s',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = T.white)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = T.inkGhost)}
-                    onClick={() => navigate('/dashboard')}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = T.teal)}
+                    onMouseLeave={(e) => {
+                        if (!isSettingsOpen) e.currentTarget.style.color = T.inkGhost
+                    }}
                 >
-                    <SettingsIcon color="currentColor" />
+                    <SettingsIcon color={isSettingsOpen ? T.white : 'currentColor'} /> {/* Highlight icon when open */}
                     <span style={{ fontSize: 14, fontWeight: 500 }}>Settings</span>
                 </button>
+                {isSettingsOpen && <Settings onClose={() => setIsSettingsOpen(false)} />}
 
-                <button
-                    onClick={() => {
-                        clearAuth()
-                        navigate('/login', { replace: true })
-                    }}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 14,
-                        padding: '12px 18px',
-                        borderRadius: 16,
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        width: '100%',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        color: T.rust,
-                        transition: 'all 0.2s',
-                    }}
-                >
-                    <LogoutIcon color="currentColor" />
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>Sign Out</span>
-                </button>
             </div>
         </aside>
     )

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 
 import { get } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth.store'
 import { SideBar } from '@/components/SideBar'
+import { Settings } from '@/components/Settings'
 import { T } from '@/components/ColorPalette'
 import type { Order, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus } from '@/types'
 import { TopBar } from '@/components/TopBar'
@@ -120,6 +121,8 @@ export function Dashboard() {
 
   const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
   const [onlineUsers, setOnlineUsers] = useState(1)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
 
   useEffect(() => {
     if (!user) navigate('/login', { replace: true })
@@ -171,7 +174,12 @@ export function Dashboard() {
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
       {/* SIDEBAR COMPONENT */}
-      <SideBar activePage={activePage} />
+      <SideBar activePage={activePage} onSettingsClick={() => setIsSettingsOpen(true)} />
+      {/** Settings overlay (bottom-left) */}
+      {isSettingsOpen && (
+        <Settings onClose={() => setIsSettingsOpen(false)} />
+      )}
+
 
       {/* MAIN CONTENT VIEWPORT */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -330,7 +338,7 @@ export function Dashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
               {/* CALENDAR WIDGET */}
-                <CalendarWidget />
+              <CalendarWidget />
 
               {/* ORDERS SYSTEM NOTIFICATIONS & ACTION REMINDERS WIDGET WINDOW */}
               <div style={{
