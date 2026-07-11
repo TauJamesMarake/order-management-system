@@ -13,7 +13,6 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-/* Route imports */
 import authRoutes from './routes/auth.routes'
 import orderRoutes from './routes/orders.routes'
 import userRoutes from './routes/users.routes'
@@ -21,7 +20,6 @@ import reportRoutes from './routes/reports.routes'
 
 const app: Application = express()
 
-// Security headers
 app.use(helmet())
 
 // CORS
@@ -35,13 +33,6 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-/* Request correlation ID
- * This middleware:
- *  1. Generates a UUID for every incoming request.
- *  2. Attaches it to req.id so controllers can include it in log calls.
- *  3. Sends it back to the client as X-Request-Id so frontend teams and
- *     support staff can cross-reference their error reports with server logs.
- */
 app.use((req: Request, res: Response, next: NextFunction) => {
   const requestId = randomUUID()
     ; (req as Request & { id: string }).id = requestId
@@ -49,7 +40,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next()
 })
 
-// HTTP request logging
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'))
 }
@@ -61,22 +51,16 @@ const globalLimiter = rateLimit({
   message: { success: false, error: 'Too many requests. Please try again later.' },
 })
 
-/** Tight limiter for login — slows brute-force credential stuffing */
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   /* 15 minutes */
-  max: 20,                /* 20 login attempts per IP per window */
+  windowMs: 15 * 60 * 1000,   // 15 minutes
+  max: 20,                // 20 login attempts per IP per window
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many login attempts. Please try again later.' },
 })
 
-/**
- * Very tight limiter for report exports.
- * Each export loads up to REPORT_ROW_CAP rows and renders a file in memory.
- * Limiting to 10 per 15 minutes per IP prevents CPU / OOM abuse.
- */
 const exportLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
@@ -97,15 +81,10 @@ app.get('/health', (_req: Request, res: Response) => {
 })
 
 /* API routes */
-/*
- * Per-route limiters are mounted before the router so they apply to every
- * handler in that router without requiring individual middleware calls.
- */
 app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/reports', reportRoutes)
-
 app.use('/api/reports/export', exportLimiter)
 
 /* 404 */
