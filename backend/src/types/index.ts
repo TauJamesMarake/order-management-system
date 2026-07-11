@@ -21,6 +21,16 @@ export interface iPlatformAdmin {
   created_at: string
 }
 
+export interface iBusiness {
+  id: string
+  name: string
+  order_prefix: string
+  is_active: boolean
+  suspended_at: string | null
+  suspended_reason: string | null
+  created_at: string
+}
+
 export type OrderStatus =
   | 'pending'
   | 'confirmed'

@@ -17,6 +17,7 @@ import authRoutes from './routes/auth.routes'
 import orderRoutes from './routes/orders.routes'
 import userRoutes from './routes/users.routes'
 import reportRoutes from './routes/reports.routes'
+import platformRoutes from './routes/reports.routes'
 
 const app: Application = express()
 
@@ -85,6 +86,7 @@ app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/reports', reportRoutes)
+app.use('/api/platform', platformRoutes)
 app.use('/api/reports/export', exportLimiter)
 
 /* 404 */
