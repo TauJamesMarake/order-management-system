@@ -2,29 +2,6 @@ import { supabase } from '../db/supabase'
 import { iOrder } from '../types'
 
 /**
- * Audit Service
- *
- * Writes an immutable audit trail for every field-level change on orders.
- * The audit_logs table is protected by triggers that prevent UPDATE and
- * DELETE, ensuring the trail cannot be tampered with.
- *
- * ── Failure policy ────────────────────────────────────────────────────────
- * Audit writes are intentionally non-blocking — a failure must not break
- * order creation or mutation.  However, silent failures are a compliance
- * risk: if the audit trail has gaps they become invisible until forensics.
- *
- * ── Fix: structured error logging ────────────────────────────────────────
- * The original code swallowed audit failures with a plain console.error.
- * We now emit a structured error object so any log aggregator (Datadog,
- * Sentry, CloudWatch) can alert on audit failures.
- *
- * TODO: replace logAuditError() with your error-tracking SDK call
- * (e.g. Sentry.captureException) once one is integrated.
- */
-
-/* Internal helpers */
-
-/**
  * Emits a structured error to the console.
  * Replace the body of this function with your error-tracking SDK call.
  *
@@ -43,7 +20,6 @@ function logAuditError(context: string, message: string, detail?: unknown): void
   }))
 }
 
-/* Only tracked order fieldss are recorded in the audit trail */
 const TRACKED_FIELDS: (keyof iOrder)[] = [
   'client_name',
   'mineral_type',
@@ -53,19 +29,15 @@ const TRACKED_FIELDS: (keyof iOrder)[] = [
   'notes',
 ]
 
-/* Public API */
-
-/**
- * Writes one audit_log row per field that changed on an order.
- * Called by the orders controller after every successful update.
- */
 export async function logOrderChanges(
   orderId: string,
   changedById: string,
   previous: iOrder,
-  updated: iOrder
+  updated: iOrder,
+  businessId: string,
 ): Promise<void> {
   const entries: {
+    business_id: string
     order_id: string
     changed_by: string
     field_changed: string
@@ -77,9 +49,9 @@ export async function logOrderChanges(
     const oldVal = previous[field]
     const newVal = updated[field]
 
-    /* Only log fields whose value actually changed */
     if (String(oldVal) !== String(newVal)) {
       entries.push({
+        business_id: businessId,
         order_id: orderId,
         changed_by: changedById,
         field_changed: field,
@@ -102,15 +74,14 @@ export async function logOrderChanges(
   }
 }
 
-/**
- * Logs order creation as a single audit entry with a descriptive message.
- */
 export async function logOrderCreated(
   orderId: string,
   changedById: string,
-  orderNumber: string
+  orderNumber: string,
+  businessId: string
 ): Promise<void> {
   const { error } = await supabase.from('audit_logs').insert({
+    business_id: businessId,
     order_id: orderId,
     changed_by: changedById,
     field_changed: 'order',
@@ -127,15 +98,14 @@ export async function logOrderCreated(
   }
 }
 
-/**
- * Logs a cancellation with the previous status for clear before/after context.
- */
 export async function logOrderCancelled(
   orderId: string,
   changedById: string,
-  previousStatus: string
+  previousStatus: string,
+  businessId: string
 ): Promise<void> {
   const { error } = await supabase.from('audit_logs').insert({
+    business_id: businessId,
     order_id: orderId,
     changed_by: changedById,
     field_changed: 'status',
@@ -152,10 +122,7 @@ export async function logOrderCancelled(
   }
 }
 
-/**
- * Returns the full audit trail for a single order, newest entries first.
- */
-export async function getAuditLogsForOrder(orderId: string) {
+export async function getAuditLogsForOrder(orderId: string, businessId: string) {
   const { data, error } = await supabase
     .from('audit_logs')
     .select(`
@@ -163,6 +130,7 @@ export async function getAuditLogsForOrder(orderId: string) {
       changer:users!changed_by (id, full_name, email)
     `)
     .eq('order_id', orderId)
+    .eq('business_id', businessId)
     .order('changed_at', { ascending: false })
 
   if (error) {

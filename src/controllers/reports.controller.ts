@@ -1,21 +1,11 @@
 import { Request, Response } from 'express'
 import { z } from 'zod'
 import { sendSuccess, sendError } from '../utils/response'
+import { supabase } from '../db/supabase'
 import * as OrdersService from '../services/orders.service'
 import * as ReportsService from '../services/reports.service'
 import { iOrderFilters, OrderStatus } from '../types'
 
-/*
- * Reports Controller
- *
- * Two response patterns:
- *  - getSummary()  → standard JSON via sendSuccess()
- *  - exportExcel() → streams a Buffer as a file download
- *  - exportPdf()   → streams a Buffer as a file download
- *
- * File streaming skips sendSuccess() entirely.
- * Headers instruct the browser to treat the response as a download.
- */
 const REPORT_ROW_CAP = 500
 
 const VALID_STATUSES: OrderStatus[] = [
@@ -28,11 +18,6 @@ const DateStringSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
   .refine(v => !isNaN(new Date(v).getTime()), 'Invalid date')
 
-// Shared filter parser
-/**
- * Parses and validates all query parameters shared by the summary and
- * export endpoints.
- */
 function parseReportFilters(
   query: Request['query']
 ): { filters: iOrderFilters; error?: string } {
@@ -65,15 +50,22 @@ function parseReportFilters(
       client_name: query.client_name as string | undefined,
       date_from: query.date_from as string | undefined,
       date_to: query.date_to as string | undefined,
-      /* No pagination for reports, only all matching orders up to cap */
       limit: REPORT_ROW_CAP,
       page: 1,
     },
   }
 }
 
-// GET /api/reports/summary
+async function resolveOrderPrefix(businessId: string): Promise<string> {
+  const { data } = await supabase
+    .from('businesses')
+    .select('order_prefix')
+    .eq('id', businessId)
+    .single()
+  return data?.order_prefix?.toLowerCase() ?? 'orders'
+}
 
+// GET /api/reports/summary
 export async function getSummary(req: Request, res: Response): Promise<void> {
   try {
     const { filters, error: filterError } = parseReportFilters(req.query)
@@ -82,10 +74,9 @@ export async function getSummary(req: Request, res: Response): Promise<void> {
       return
     }
 
-    const result = await OrdersService.getOrders(filters)
+    const result = await OrdersService.getOrders(filters, req.user!.business_id)
     const orders = result.items
 
-    // Aggregate totals server-side, never send all rows to the frontend
     const totalValue = orders.reduce((sum, o) => sum + Number(o.total_zar), 0)
     const totalQty = orders.reduce((sum, o) => sum + Number(o.quantity_kg), 0)
 
@@ -123,7 +114,6 @@ export async function getSummary(req: Request, res: Response): Promise<void> {
 }
 
 // GET /api/reports/export/excel
-
 export async function exportExcel(req: Request, res: Response): Promise<void> {
   try {
     const { filters, error: filterError } = parseReportFilters(req.query)
@@ -132,7 +122,7 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
       return
     }
 
-    const result = await OrdersService.getOrders(filters)
+    const result = await OrdersService.getOrders(filters, req.user!.business_id)
 
     if (result.items.length === 0) {
       sendError(res, 'No orders found for the selected filters.', 404)
@@ -150,15 +140,10 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
       ? `_${filters.date_from}_to_${filters.date_to}`
       : `_${new Date().toISOString().slice(0, 10)}`
 
-    const filename = `mare_oms_orders${datePart}.xlsx`
+    const prefix = await resolveOrderPrefix(req.user!.business_id)
+    const filename = `${prefix}_orders${datePart}.xlsx`
 
-    /*
-     * File streaming headers:
-     *  Content-Type        — tells the browser this is an XLSX file
-     *  Content-Disposition — forces a download rather than inline render
-     *  Content-Length      — lets the browser show a progress indicator
-     *  Cache-Control       — prevents stale cached exports
-     */
+
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
     res.setHeader('Content-Length', buffer.length)
@@ -167,7 +152,6 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
     res.status(200).end(buffer)
   } catch (err) {
     console.error('[exportExcel]', err)
-    /* Only send an error response if headers have not already been flushed */
     if (!res.headersSent) {
       sendError(res, 'Failed to generate Excel report.')
     }
@@ -175,7 +159,6 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
 }
 
 // GET /api/reports/export/pdf
-
 export async function exportPdf(req: Request, res: Response): Promise<void> {
   try {
     const { filters, error: filterError } = parseReportFilters(req.query)
@@ -184,7 +167,7 @@ export async function exportPdf(req: Request, res: Response): Promise<void> {
       return
     }
 
-    const result = await OrdersService.getOrders(filters)
+    const result = await OrdersService.getOrders(filters, req.user!.business_id)
 
     if (result.items.length === 0) {
       sendError(res, 'No orders found for the selected filters.', 404)
@@ -197,11 +180,13 @@ export async function exportPdf(req: Request, res: Response): Promise<void> {
       status: filters.status,
     })
 
-    const datePart = filters.date_from && filters.date_to
-      ? `_${filters.date_from}_to_${filters.date_to}`
-      : `_${new Date().toISOString().slice(0, 10)}`
+    const datePart =
+      filters.date_from && filters.date_to
+        ? `_${filters.date_from}_to_${filters.date_to}`
+        : `_${new Date().toISOString().slice(0, 10)}`
 
-    const filename = `mare_oms_orders${datePart}.pdf`
+    const prefix = await resolveOrderPrefix(req.user!.business_id)
+    const filename = `${prefix}_orders${datePart}.pdf`
 
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)

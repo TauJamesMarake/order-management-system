@@ -4,6 +4,7 @@ export type UserRole = 'admin' | 'clerk' | 'viewer'
 
 export interface iUser {
   id: string
+  business_id: string
   email: string
   full_name: string
   role: UserRole
@@ -11,7 +12,15 @@ export interface iUser {
   created_at: string
 }
 
-/* Order */
+export interface iPlatformAdmin {
+  // Authenticated via /api/platform/auth/login.
+  id: string
+  email: string
+  full_name: string
+  is_active: boolean
+  created_at: string
+}
+
 export type OrderStatus =
   | 'pending'
   | 'confirmed'
@@ -21,6 +30,7 @@ export type OrderStatus =
 
 export interface iOrder {
   id: string
+  business_id: string
   order_number: string
   client_name: string
   mineral_type: string
@@ -52,9 +62,9 @@ export interface iUpdateOrderDTO {
   status?: OrderStatus
 }
 
-/* Audit Log */
 export interface iAuditLog {
   id: string
+  business_id: string
   order_id: string
   changed_by: string
   field_changed: string
@@ -64,7 +74,7 @@ export interface iAuditLog {
   changer?: Pick<iUser, 'id' | 'full_name' | 'email'>
 }
 
-/* API response shapes */
+// API Responses
 export interface iApiSuccess<T> {
   success: true
   data: T
@@ -79,7 +89,6 @@ export interface iApiError {
 
 export type ApiResponse<T> = iApiSuccess<T> | iApiError
 
-/* Pagination */
 export interface iPaginatedResult<T> {
   items: T[]
   total: number
@@ -88,21 +97,17 @@ export interface iPaginatedResult<T> {
   totalPages: number
 }
 
-/* Order Filters */
 export interface iOrderFilters {
   status?: OrderStatus
   mineral_type?: string
   client_name?: string
-  /** ISO-8601 date string YYYY-MM-DD — validated before use */
   date_from?: string
-  /** ISO-8601 date string YYYY-MM-DD — validated before use */
   date_to?: string
   search?: string
   page?: number
   limit?: number
 }
 
-/* Express Request augmentation */
 declare global {
   namespace Express {
     interface Request {
@@ -110,15 +115,31 @@ declare global {
         id: string
         email: string
         role: UserRole
+        business_id: string
+      }
+      platformAdmin?: {
+        id: string
+        email: string
       }
     }
   }
 }
 
+// AuthenticatedRequest
 export interface iAuthenticatedRequest extends Request {
   user: {
     id: string
     email: string
     role: UserRole
+    business_id: string
+  }
+}
+
+// PlatformAuthenticatedRequest
+// Use in platform admin controllers where req.platformAdmin is guaranteed.
+export interface iPlatformAuthenticatedRequest extends Request {
+  platformAdmin: {
+    id: string
+    email: string
   }
 }

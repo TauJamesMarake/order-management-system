@@ -2,60 +2,40 @@ import { supabase } from '../db/supabase'
 import { createClient } from '@supabase/supabase-js'
 import { iUser, UserRole } from '../types'
 
-/*
-Users Service
-
-RESPONSIBILITY:
-  All database operations for user accounts.
-  Creating a user touches two systems:
-    1. Supabase Auth — for credentials + JWT capability
-    2. Our users table — for role, name, is_active
-  Updating only touches our users table.
-  Supabase Auth handles password changes via its own flow.
-*/
-
-/*
-Admin client — needed to create Auth users server-side
-without sending a confirmation email
-*/
 const adminAuthClient = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 )
 
-/* CREATE
- Two-phase: Auth account first, then profile row.
- If the profile insert fails, Auth account is cleaned up
- so we don't leave an orphaned auth user with no profile.
-*/
+// Create
 export async function createUser(dto: {
   email: string
   password: string
   full_name: string
   role: UserRole
-}): Promise<iUser> {
-  // Phase 1: Create Supabase Auth account
+}, businessId: string): Promise<iUser> {
+  // Create Supabase Auth account
   const { data: authData, error: authError } = await adminAuthClient
     .auth
     .admin
     .createUser({
       email: dto.email,
       password: dto.password,
-      email_confirm: true, // skip confirmation email since admin is creating the account
+      email_confirm: true,
     })
 
   if (authError || !authData.user) {
-    throw new Error(`Failed to create auth account: ${authError?.message}`)
+    throw new Error(`Failed to create account: ${authError?.message}`)
   }
 
   const authUserId = authData.user.id
 
-  // Phase 2: Insert profile into our users table using the same UUID
   const { data: profile, error: profileError } = await supabase
     .from('users')
     .insert({
-      id: authUserId,   // must match Supabase Auth UUID
+      id: authUserId,
+      business_id: businessId,
       email: dto.email,
       full_name: dto.full_name,
       role: dto.role,
@@ -64,7 +44,7 @@ export async function createUser(dto: {
     .single()
 
   if (profileError || !profile) {
-    // Rollback: delete the Auth account so it doesn't become an orphan
+    // deletes the Auth account so it doesn't become an orphan
     await adminAuthClient.auth.admin.deleteUser(authUserId)
     throw new Error(`Failed to create user profile: ${profileError?.message}`)
   }
@@ -76,17 +56,18 @@ export async function createUser(dto: {
 export async function getUsers(filters?: {
   role?: UserRole
   is_active?: boolean
-}): Promise<iUser[]> {
+}, businessId?: string): Promise<iUser[]> {
   let query = supabase
     .from('users')
     .select('*')
+    .eq('business_id', businessId)
     .order('created_at', { ascending: false })
 
   if (filters?.role !== undefined) {
     query = query.eq('role', filters.role)
   }
 
-  // is_active can be true or false — check explicitly for undefined
+  // is_active can be true or false
   if (filters?.is_active !== undefined) {
     query = query.eq('is_active', filters.is_active)
   }
@@ -98,32 +79,26 @@ export async function getUsers(filters?: {
 }
 
 // Get one
-export async function getUserById(id: string): Promise<iUser> {
+export async function getUserById(id: string, businessId: string): Promise<iUser> {
   const { data, error } = await supabase
     .from('users')
     .select('*')
     .eq('id', id)
+    .eq('business_id', businessId)
     .single()
 
   if (error || !data) throw new Error('User not found.')
   return data as iUser
 }
 
-/*
-UPDATE PROFILE
-Admin can update any field including role.
-A clerk updating their own profile can only change full_name.
-The controller enforces this distinction — service just updates.
-*/
 export async function updateUser(
   id: string,
   dto: {
     full_name?: string
     role?: UserRole
     is_active?: boolean
-  }
+  }, businessId: string
 ): Promise<iUser> {
-  // Build payload from only the provided fields
   const payload: Partial<typeof dto> = {}
   if (dto.full_name !== undefined) payload.full_name = dto.full_name.trim()
   if (dto.role !== undefined) payload.role = dto.role
@@ -137,6 +112,7 @@ export async function updateUser(
     .from('users')
     .update(payload)
     .eq('id', id)
+    .eq('business_id', businessId)
     .select()
     .single()
 
@@ -147,29 +123,24 @@ export async function updateUser(
   return data as iUser
 }
 
-/*
-DEACTIVATE (soft delete)
-Never hard-delete users — orders reference them via FK.
-Deactivation blocks login (verifyToken checks is_active).
-The Supabase Auth account is also banned so the JWT is rejected.
-*/
-export async function deactivateUser(id: string): Promise<iUser> {
-  const current = await getUserById(id)
+// DEACTIVATE (soft delete)
+export async function deactivateUser(id: string, businessId: string): Promise<iUser> {
+  const current = await getUserById(id, businessId)
 
   if (!current.is_active) {
     throw new Error('User is already deactivated.')
   }
 
-  // Ban in Supabase Auth — invalidates existing JWTs
+  // Ban in Supabase Auth, invalidates existing JWTs
   await adminAuthClient.auth.admin.updateUserById(id, { ban_duration: '876600h' }) // 100 years
 
-  const updated = await updateUser(id, { is_active: false })
+  const updated = await updateUser(id, { is_active: false }, businessId)
   return updated
 }
 
 // REACTIVATE
-export async function reactivateUser(id: string): Promise<iUser> {
-  const current = await getUserById(id)
+export async function reactivateUser(id: string, businessId: string): Promise<iUser> {
+  const current = await getUserById(id, businessId)
 
   if (current.is_active) {
     throw new Error('User is already active.')
@@ -178,6 +149,6 @@ export async function reactivateUser(id: string): Promise<iUser> {
   // Unban in Supabase Auth
   await adminAuthClient.auth.admin.updateUserById(id, { ban_duration: 'none' })
 
-  const updated = await updateUser(id, { is_active: true })
+  const updated = await updateUser(id, { is_active: true }, businessId)
   return updated
 }
