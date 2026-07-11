@@ -2,57 +2,33 @@ import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../db/supabase'
 import { iUser } from '../types'
 
-/**
- * Auth Service
- *
- * Handles session operations: login, logout, and password reset.
- * Wraps Supabase Auth and enriches responses with application profile data
- * (role, full_name) from the users table.
- *
- * NOTE: signInWithPassword must be called with the anon key — not the
- * service-role key — because it operates on behalf of the user.
- */
+const anonClient = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+)
 
-const supabaseUrl = process.env.SUPABASE_URL!
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!
+function toOneRecord<T>(data: T | T[] | null | undefined): T | null {
+  if (data == null) return null
+  return Array.isArray(data) ? (data[0] ?? null) : data
+}
 
-/**
- * Shared anon client used only for password reset.
- * Login and logout each construct a short-lived client seeded with the
- * appropriate credentials so sessions are correctly scoped.
- */
-const anonClient = createClient(supabaseUrl, supabaseAnonKey)
-
-/* Types */
 export interface iLoginResult {
-  /** JWT access token — frontend stores and sends as Authorization: Bearer */
   token: string
-  /** Refresh token obtain a new JWT when the current one expires */
   refresh_token: string
   user: {
     id: string
     email: string
     full_name: string
     role: string
+    business_id: string
   }
 }
 
-/* Login */
-
-/**
- * Authenticates the user via Supabase Auth and returns a JWT plus profile.
- *
- * Steps:
- *  1. Validate credentials with Supabase.
- *  2. Load the application profile (role, full_name, is_active).
- *  3. Block deactivated accounts before issuing a token.
- */
+// POST /api/auth/login
 export async function login(
   email: string,
   password: string
 ): Promise<iLoginResult> {
-
-  /* Step 1 Supabase Auth credential check */
   const { data, error } = await anonClient.auth.signInWithPassword({
     email,
     password,
@@ -62,10 +38,19 @@ export async function login(
     throw new Error('Invalid email or password.')
   }
 
-  /* Step 2 Load application profile */
   const { data: profile, error: profileError } = await supabase
     .from('users')
-    .select('id, email, full_name, role, is_active')
+    .select(`
+      id,
+      email,
+      full_name,
+      role,
+      is_active,
+      business_id,
+      business:businesses!inner (
+        is_active
+      )
+    `)
     .eq('id', data.user.id)
     .single()
 
@@ -73,14 +58,16 @@ export async function login(
     throw new Error('User account not found. Contact your administrator.')
   }
 
-  /* Step 3 Block deactivated accounts
-   *
-   * Supabase Auth allows the login because it does not know about is_active.
-   * We check here and refuse to return a token rather than relying on the
-   * ban_duration set during deactivation (belt-and-suspenders).
-   */
   if (!profile.is_active) {
     throw new Error('Your account has been deactivated. Contact your administrator.')
+  }
+
+  const business = toOneRecord(profile.business)
+
+  if (!business || !business.is_active) {
+    throw new Error(
+      'This business account has been suspended. Contact the administrator.'
+    )
   }
 
   return {
@@ -91,33 +78,21 @@ export async function login(
       email: profile.email,
       full_name: profile.full_name,
       role: profile.role,
+      business_id: profile.business_id,
     },
   }
 }
 
-/* Logout */
+// POST /api/auth/logout
 export async function logout(token: string): Promise<void> {
-  /* Build a per-request client that carries the user's own token */
-  const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
-
-  const { error } = await userClient.auth.signOut()
+  const { error } = await anonClient.auth.signOut()
 
   if (error) {
     console.error('[AuthService] Logout error:', error.message)
   }
 }
 
-/* Get current user profile */
+// GET /api/auth/me
 export async function getMe(userId: string): Promise<iUser> {
   const { data, error } = await supabase
     .from('users')
@@ -125,14 +100,11 @@ export async function getMe(userId: string): Promise<iUser> {
     .eq('id', userId)
     .single()
 
-  if (error || !data) {
-    throw new Error('User not found.')
-  }
-
+  if (error || !data) throw new Error('User not found.')
   return data as iUser
 }
 
-/* Password reset */
+// POST /api/auth/reset-password
 export async function requestPasswordReset(email: string): Promise<void> {
   const { error } = await anonClient.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.CLIENT_URL}/reset-password`,

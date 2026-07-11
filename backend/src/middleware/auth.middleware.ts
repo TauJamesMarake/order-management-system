@@ -1,63 +1,63 @@
 import { Request, Response, NextFunction } from 'express'
 import { createClient } from '@supabase/supabase-js'
-import { supabase } from '../db/supabase'
 import { UserRole } from '../types'
 import { sendError } from '../utils/response'
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
+const anonClient = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+)
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Missing SUPABASE_URL or SUPABASE_ANON_KEY'
-  )
+function toOneRecord<T>(data: T | T[] | null | undefined): T | null {
+  if (data == null) return null
+  return Array.isArray(data) ? (data[0] ?? null) : data
 }
 
-const anonClient = createClient(supabaseUrl, supabaseAnonKey)
-
-/**
- * verifyToken
- *
- * Express middleware that:
- *  1. Extracts the Bearer token from the Authorization header.
- *  2. Validates it with Supabase Auth.
- *  3. Loads the matching user profile from the users table.
- *  4. Rejects deactivated accounts.
- *  5. Stamps req.user so downstream handlers can read role / id.
- */
 export async function verifyToken(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
+    // Step 1: Extract token
     const authHeader = req.headers.authorization
 
-    if (!authHeader || !authHeader?.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
       sendError(res, 'No token provided. Include Authorization: Bearer <token>', 401)
       return
     }
 
     const token = authHeader.split(' ')[1]
-
     if (!token) {
       sendError(res, 'Malformed authorization header.', 401)
       return
     }
 
-    /* Validate the JWT with Supabase Auth */
-    const { data: { user: authUser }, error: authError } =
-      await anonClient.auth.getUser(token)
+    // Step 2: Verify JWT with Supabase Auth
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await anonClient.auth.getUser(token)
 
     if (authError || !authUser) {
       sendError(res, 'Invalid or expired token. Please log in again.', 401)
       return
     }
 
-    /* Load the application profile (role, is_active) */
+    // Step 3: Load user profile + business in one query
+    const { supabase } = await import('../db/supabase')
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('id, email, role, is_active')
+      .select(`
+        id,
+        email,
+        role,
+        is_active,
+        business_id,
+        business:businesses!inner (
+          is_active
+        )
+      `)
       .eq('id', authUser.id)
       .single()
 
@@ -66,21 +66,104 @@ export async function verifyToken(
       return
     }
 
+    // Step 4: Reject deactivated users
     if (!profile.is_active) {
       sendError(res, 'Your account has been deactivated. Contact your administrator.', 403)
       return
     }
 
-    /* Stamp the request — available to all downstream handlers */
+    // Step 5: Reject suspended businesses
+    const business = toOneRecord(profile.business)
+
+    if (!business) {
+      sendError(res, 'Business account not found. Contact the administrator.', 401)
+      return
+    }
+
+    if (!business.is_active) {
+      sendError(
+        res,
+        'This business account has been suspended. Contact the administrator.',
+        403
+      )
+      return
+    }
+
+    // Step 6
     req.user = {
       id: profile.id,
       email: profile.email,
       role: profile.role as UserRole,
+      business_id: profile.business_id,
+    }
+
+    // Step 7: Proceed
+    next()
+
+  } catch (err) {
+    console.error('[verifyToken] Unexpected error:', err)
+    sendError(res, 'Authentication error.', 500)
+  }
+}
+
+export async function verifyPlatformToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    // Step 1: Extract token
+    const authHeader = req.headers.authorization
+
+    if (!authHeader?.startsWith('Bearer ')) {
+      sendError(res, 'No token provided.', 401)
+      return
+    }
+
+    const token = authHeader.split(' ')[1]
+    if (!token) {
+      sendError(res, 'Malformed authorization header.', 401)
+      return
+    }
+
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await anonClient.auth.getUser(token)
+
+    if (authError || !authUser) {
+      sendError(res, 'Invalid or expired token. Please log in again.', 401)
+      return
+    }
+
+    const { supabase } = await import('../db/supabase')
+    const { data: admin, error: adminError } = await supabase
+      .from('platform_admins')
+      .select('id, email, is_active')
+      .eq('id', authUser.id)
+      .single()
+
+    if (adminError || !admin) {
+      // if a business user hits a platform route,
+      // they get a generic 401, not confirmation that the route exists
+      sendError(res, 'Invalid or expired token. Please log in again.', 401)
+      return
+    }
+
+    if (!admin.is_active) {
+      sendError(res, 'This platform admin account has been deactivated.', 403)
+      return
+    }
+
+    req.platformAdmin = {
+      id: admin.id,
+      email: admin.email,
     }
 
     next()
+
   } catch (err) {
-    console.error('[verifyToken] Unexpected error:', err)
+    console.error('[verifyPlatformToken] Unexpected error:', err)
     sendError(res, 'Authentication error.', 500)
   }
 }

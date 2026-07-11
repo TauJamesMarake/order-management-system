@@ -16,15 +16,10 @@ const AdminUpdateSchema = z.object({
     is_active: z.boolean().optional(),
 }).refine(d => Object.keys(d).length > 0, { message: 'At least one field required.' })
 
-/**
- * Self-update schema, only full_name is allowed.
- * Role and is_active are intentionally absent to prevent privilege escalation.
- */
 const SelfUpdateSchema = z.object({
     full_name: z.string().min(2).max(255),
 })
 
-// Inferred types (single source of truth)
 type CreateUserPayload = z.infer<typeof CreateUserSchema>
 type AdminUpdatePayload = z.infer<typeof AdminUpdateSchema>
 
@@ -39,7 +34,7 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
                 : undefined,
         }
 
-        const users = await UsersService.getUsers(filters)
+        const users = await UsersService.getUsers(filters, req.user!.business_id)
         sendSuccess(res, users)
     } catch (err) {
         console.error('[getUsers]', err)
@@ -48,11 +43,6 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
 }
 
 // GET /api/users/:id
-
-/**
- * Admin: can fetch any user.
- * Clerk / Viewer: own profile only.
- */
 export async function getUserById(req: Request, res: Response): Promise<void> {
     try {
         const { id } = req.params
@@ -63,7 +53,7 @@ export async function getUserById(req: Request, res: Response): Promise<void> {
             return
         }
 
-        const user = await UsersService.getUserById(id)
+        const user = await UsersService.getUserById(id, req.user!.business_id)
         sendSuccess(res, user)
     } catch (err) {
         console.error('[getUserById]', err)
@@ -84,7 +74,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
         /* Type is now inferred from schema, no separate interface needed */
         const dto: CreateUserPayload = parsed.data
 
-        const user = await UsersService.createUser(dto)
+        const user = await UsersService.createUser(dto, req.user!.business_id)
         sendSuccess(res, user, 'User created successfully.', 201)
     } catch (err) {
         console.error('[createUser]', err)
@@ -93,10 +83,6 @@ export async function createUser(req: Request, res: Response): Promise<void> {
 }
 
 // PATCH /api/users/:id
-/**
- * Admin: can update full_name, role, is_active.
- * Clerk / Viewer (self only): can update full_name only.
- */
 export async function updateUser(req: Request, res: Response): Promise<void> {
     try {
         const { id } = req.params
@@ -125,7 +111,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
             ? parsed.data
             : { full_name: (parsed.data as { full_name: string }).full_name }
 
-        const updated = await UsersService.updateUser(id, safePayload)
+        const updated = await UsersService.updateUser(id, safePayload, req.user!.business_id)
         sendSuccess(res, updated, 'User updated successfully.')
     } catch (err) {
         console.error('[updateUser]', err)
@@ -145,7 +131,7 @@ export async function deactivateUser(req: Request, res: Response): Promise<void>
             return
         }
 
-        const user = await UsersService.deactivateUser(id)
+        const user = await UsersService.deactivateUser(id, req.user!.business_id)
         sendSuccess(res, user, 'User deactivated successfully.')
     } catch (err) {
         console.error('[deactivateUser]', err)
@@ -159,7 +145,7 @@ export async function deactivateUser(req: Request, res: Response): Promise<void>
 export async function reactivateUser(req: Request, res: Response): Promise<void> {
     try {
         const { id } = req.params
-        const user = await UsersService.reactivateUser(id)
+        const user = await UsersService.reactivateUser(id, req.user!.business_id)
         sendSuccess(res, user, 'User reactivated successfully.')
     } catch (err) {
         console.error('[reactivateUser]', err)
