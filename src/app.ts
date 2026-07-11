@@ -17,10 +17,10 @@ import authRoutes from './routes/auth.routes'
 import orderRoutes from './routes/orders.routes'
 import userRoutes from './routes/users.routes'
 import reportRoutes from './routes/reports.routes'
+import platformRoutes from './routes/platform.routes'
 
 const app: Application = express()
 
-// Security headers
 app.use(helmet())
 
 // CORS
@@ -35,42 +35,33 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // generates a new UUID for every request and attaches it to req.id 
   const requestId = randomUUID()
     ; (req as Request & { id: string }).id = requestId
   res.setHeader('X-Request-Id', requestId)
   next()
 })
 
-// HTTP request logging
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'))
 }
-
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   // 15 minutes
+  windowMs: 15 * 60 * 1000,   /* 15 minutes */
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many requests. Please try again later.' },
 })
 
-/** Tight limiter for login to slow brute-force credential stuffing */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,   // 15 minutes
-  max: 20,                // 20 login attempts per IP per window 
+  max: 20,                // 20 login attempts per IP per window
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many login attempts. Please try again later.' },
 })
 
-/*
- * Very tight limiter for report exports.
- * Each export loads up to REPORT_ROW_CAP rows and renders a file in memory.
- * Limiting to 10 per 15 minutes per IP prevents CPU / OOM abuse.
- */
 const exportLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
@@ -90,12 +81,12 @@ app.get('/health', (_req: Request, res: Response) => {
   })
 })
 
-// API routes
+/* API routes */
 app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/reports', reportRoutes)
-
+app.use('/api/platform', platformRoutes)
 app.use('/api/reports/export', exportLimiter)
 
 /* 404 */
@@ -103,7 +94,7 @@ app.use((_req: Request, res: Response) => {
   res.status(404).json({ success: false, error: 'Route not found.' })
 })
 
-// Global error handler
+/* Global error handler */
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('[Unhandled Error]', err.message)
   res.status(500).json({ success: false, error: 'Internal server error.' })
