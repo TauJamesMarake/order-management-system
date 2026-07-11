@@ -13,6 +13,7 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
+/* Route imports */
 import authRoutes from './routes/auth.routes'
 import orderRoutes from './routes/orders.routes'
 import userRoutes from './routes/users.routes'
@@ -34,8 +35,14 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+/* Request correlation ID
+ * This middleware:
+ *  1. Generates a UUID for every incoming request.
+ *  2. Attaches it to req.id so controllers can include it in log calls.
+ *  3. Sends it back to the client as X-Request-Id so frontend teams and
+ *     support staff can cross-reference their error reports with server logs.
+ */
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // generates a new UUID for every request and attaches it to req.id 
   const requestId = randomUUID()
     ; (req as Request & { id: string }).id = requestId
   res.setHeader('X-Request-Id', requestId)
@@ -46,25 +53,24 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'))
 }
-
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   // 15 minutes
+  windowMs: 15 * 60 * 1000,   /* 15 minutes */
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many requests. Please try again later.' },
 })
 
-/** Tight limiter for login to slow brute-force credential stuffing */
+/** Tight limiter for login — slows brute-force credential stuffing */
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   // 15 minutes
-  max: 20,                // 20 login attempts per IP per window 
+  windowMs: 15 * 60 * 1000,   /* 15 minutes */
+  max: 20,                /* 20 login attempts per IP per window */
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many login attempts. Please try again later.' },
 })
 
-/*
+/**
  * Very tight limiter for report exports.
  * Each export loads up to REPORT_ROW_CAP rows and renders a file in memory.
  * Limiting to 10 per 15 minutes per IP prevents CPU / OOM abuse.
@@ -90,7 +96,11 @@ app.get('/health', (_req: Request, res: Response) => {
   })
 })
 
-// API routes
+/* API routes */
+/*
+ * Per-route limiters are mounted before the router so they apply to every
+ * handler in that router without requiring individual middleware calls.
+ */
 app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/users', userRoutes)
@@ -103,7 +113,7 @@ app.use((_req: Request, res: Response) => {
   res.status(404).json({ success: false, error: 'Route not found.' })
 })
 
-// Global error handler
+/* Global error handler */
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('[Unhandled Error]', err.message)
   res.status(500).json({ success: false, error: 'Internal server error.' })
