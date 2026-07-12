@@ -107,9 +107,9 @@ export function TopBar({
         position: 'sticky',
         top: 0,
         zIndex: 40,
-        boxShadow: '0 4px 20px rgba(14, 31, 31, 0.23)',
-        borderBottom: `1px solid ${T.mutedCream}60`,
-        borderTopLeftRadius: 28,
+        // boxShadow: '0 4px 14px rgba(14, 31, 31, 0.23)',
+        borderBottom: `4px solid ${T.darkBg}60`,
+        borderBottomLeftRadius: 28,
       }}
     >
       <div>

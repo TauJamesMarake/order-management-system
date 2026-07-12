@@ -50,7 +50,6 @@ export function Settings({ onClose }: iSettingsProps) {
           gap: 16,
         }}
       >
-        {/* Header Identity Meta Matrix */}
         <div>
           <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.inkPrimary }}>
             {user.full_name || 'System User'}
@@ -60,9 +59,8 @@ export function Settings({ onClose }: iSettingsProps) {
           </p>
         </div>
 
-        <hr style={{ margin: 0, border: 'none', borderBottom: `1px solid ${T.mutedCream}60` }} />
-
-        {/* Tenant Bounded Scope Section */}
+        <hr style={{ margin: 0, border: 'none', borderBottom: `3px solid ${T.mutedCream}60` }} />
+        
         <div>
           <span style={{ fontSize: 10, fontWeight: 700, color: T.inkGhost, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             User Environment

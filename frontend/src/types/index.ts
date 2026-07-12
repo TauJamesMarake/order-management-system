@@ -28,7 +28,6 @@ export interface LoginResult {
 }
 
 // Orders
-
 export type OrderStatus =
   | 'pending'
   | 'confirmed'
@@ -49,7 +48,6 @@ export interface iOrder {
   created_by: string
   created_at: string
   updated_at: string
-  // Joined from view
   creator_id?: string
   creator_name?: string
   creator_email?: string
@@ -84,8 +82,6 @@ export interface iOrderFilters {
 }
 
 // Audit
-
-// Type aliases for compatibility
 export type User = iAuthUser
 export type Order = iOrder
 export type AuthUser = iAuthUser
@@ -106,7 +102,6 @@ export interface iAuditLog {
 }
 
 // Reports
-
 export interface iOrderSummary {
   total_orders: number
   total_value_zar: number
@@ -128,7 +123,6 @@ export interface iDashboardSummary {
 }
 
 // API Response wrappers
-
 export interface iApiSuccess<T> {
   success: true
   data: T
@@ -151,10 +145,5 @@ export interface iPaginatedResult<T> {
   totalPages: number
 }
 
-// UI-only helpers
-
-/** Nullable version of any type — useful for form defaults */
 export type Nullable<T> = T | null
-
-/** All keys of T become optional + nullable */
 export type PartialNullable<T> = { [K in keyof T]?: T[K] | null }

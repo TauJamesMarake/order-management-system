@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/auth.store'
 import { T } from '@/components/ColorPalette'
 import { Settings } from '@/components/Settings'
 
-// Icons are duplicated from Dashboard/Orders to keep this component self-contained.
 function DashIcon({ color }: { color: string }) {
     return (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -61,32 +60,29 @@ const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: strin
     { id: 'users', label: 'Users', icon: UserIcon },
 ]
 
-export function SideBar({ activePage }: { activePage: string}) {
+export function SideBar({ activePage }: { activePage: string }) {
     const navigate = useNavigate()
     const { clearAuth } = useAuthStore()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-
-
 
     return (
         <aside
             style={{
                 width: 250,
-                backgroundColor: T.darkBg,
+                backgroundColor: T.white,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 position: 'sticky',
                 top: 0,
                 height: '100vh',
-                borderTopRightRadius: 28,
                 borderBottomRightRadius: 28,
                 overflow: 'hidden',
                 boxShadow: '4px 0 24px rgba(14,31,31,0.15)',
             }}
         >
             <div>
-                <div style={{ padding: '32px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div
                         style={{
                             width: 40,
@@ -101,12 +97,14 @@ export function SideBar({ activePage }: { activePage: string}) {
                         <span style={{ color: T.white, fontWeight: 800, fontSize: 20 }}>M</span>
                     </div>
                     <div>
-                        <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.white, letterSpacing: '0.02em' }}>M A R E</p>
+                        <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.darkBg, letterSpacing: '0.02em' }}>M A R E</p>
                         <p style={{ margin: 0, fontSize: 10, color: T.teal, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                             Order Management
                         </p>
                     </div>
                 </div>
+
+                <div style={{ padding: '20px 16px', borderTop: `1px solid ${T.charcoal}`, display: 'flex', flexDirection: 'column', gap: 4 }}></div>
 
                 <nav style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
@@ -129,8 +127,8 @@ export function SideBar({ activePage }: { activePage: string}) {
                                     transition: 'all 0.2s ease',
                                 }}
                             >
-                                <Icon color={active ? T.white : T.inkGhost} />
-                                <span style={{ fontSize: 14, fontWeight: active ? 600 : 500, color: active ? T.white : T.inkGhost }}>{label}</span>
+                                <Icon color={active ? T.white : T.charcoal} />
+                                <span style={{ fontSize: 14, fontWeight: active ? 600 : 500, color: active ? T.white : T.charcoal }}>{label}</span>
                             </button>
                         )
                     })}

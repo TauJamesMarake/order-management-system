@@ -42,24 +42,24 @@ const ROLE_CFG: Record<string, { bg: string; text: string; label: string }> = {
 }
 
 // Professional SVG Icons
-function DashIcon({ color }: { color: string }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
-}
-function OrderIcon({ color }: { color: string }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
-}
-function ReportIcon({ color }: { color: string }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
-}
-function UserIcon({ color }: { color: string }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-}
-function SearchIcon({ color }: { color: string }) {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-}
-function BellIcon({ color }: { color: string }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-}
+// function DashIcon({ color }: { color: string }) {
+//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
+// }
+// function OrderIcon({ color }: { color: string }) {
+//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+// }
+// function ReportIcon({ color }: { color: string }) {
+//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
+// }
+// function UserIcon({ color }: { color: string }) {
+//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+// }
+// function SearchIcon({ color }: { color: string }) {
+//   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+// }
+// function BellIcon({ color }: { color: string }) {
+//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+// }
 function AlertIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.rust} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
 }
@@ -86,9 +86,6 @@ function CompactStatCard({ label, value, sub, color, loading }: { label: string;
       boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}60`,
       display: 'flex', flexDirection: 'column', gap: 4, position: 'relative', overflow: 'hidden'
     }}>
-      {/* Left side colors */}
-      {/* <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 4, backgroundColor: color }} /> */}
-      {/* Card titles */}
       <span style={{ fontSize: 11, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
         {label}
       </span>
@@ -147,7 +144,7 @@ export function Dashboard() {
     date_from: filters.dateFrom || undefined,
     date_to: filters.dateTo || undefined,
     page: filters.page,
-    limit: 10, // Optimized for Mediline double-column layout view
+    limit: 10, // Optimised for Mediline double-column layout view
   }
 
   const { data: ordersPage, isLoading: ordersLoading, isError } = useQuery<iPaginatedResult<Order>>({
@@ -173,29 +170,23 @@ export function Dashboard() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
-      {/* SIDEBAR COMPONENT */}
-      <SideBar activePage={activePage} onSettingsClick={() => setIsSettingsOpen(true)} />
-      {/** Settings overlay (bottom-left) */}
+      <SideBar activePage={activePage} />
+
       {isSettingsOpen && (
         <Settings onClose={() => setIsSettingsOpen(false)} />
       )}
 
 
-      {/* MAIN CONTENT VIEWPORT */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
-        {/* TOP PANEL CONTROL BAR */}
         <TopBar title={activePage} searchValue={''} onSearchChange={function (v: string): void {
           throw new Error('Function not implemented.')
         }} />
 
-        {/* WORKSPACE AREA CONTAINER */}
         <main style={{ padding: '32px', flex: 1, display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-          {/* TOP SECTION: SUMMARY HERO PROFILE BLOCK + COMPACT METRICS GRID */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: 24 }}>
 
-            {/* Profile/Hero Interactive Highlight Section Card */}
             <div style={{
               backgroundColor: T.white, borderRadius: 24, padding: '24px',
               boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}60`,
@@ -224,13 +215,10 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* MAIN SCREEN SPLIT CONTENT VIEWPORTS COLUMN LAYOUT */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 28, alignItems: 'start' }}>
 
-            {/* LEFT WORKSPACE CONTENT: INTERACTIVE ORDER REGISTER REGISTER & DATA FILTERS */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-              {/* Dynamic Filter Architecture Widget Panel */}
               <div style={{
                 backgroundColor: T.white, borderRadius: 20, padding: '20px',
                 boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}50`
@@ -260,7 +248,6 @@ export function Dashboard() {
                 </div>
               </div>
 
-              {/* Order Master Register Data Presentation Grid Box */}
               <div style={{
                 backgroundColor: T.white, borderRadius: 24, boxShadow: '0 5px 8px rgba(14, 31, 31, 0.61)',
                 border: `1px solid ${T.mutedCream}60`, overflow: 'hidden'
@@ -311,7 +298,6 @@ export function Dashboard() {
                   )}
                 </div>
 
-                {/* Secure Register Data Pagination Matrix Control */}
                 {ordersPage && totalPages > 1 && (
                   <div style={{ padding: '16px 24px', borderTop: `1px solid ${T.mutedCream}60`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: T.panelBg }}>
                     <span style={{ fontSize: 12, color: T.inkSecondary, fontWeight: 500 }}>
@@ -334,13 +320,10 @@ export function Dashboard() {
               </div>
             </div>
 
-            {/* RIGHT WORKSPACE SIDE PANEL AREA: CALENDAR & DISPATCH ALERTS REMINDER APP PANEL */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-              {/* CALENDAR WIDGET */}
               <CalendarWidget />
 
-              {/* ORDERS SYSTEM NOTIFICATIONS & ACTION REMINDERS WIDGET WINDOW */}
               <div style={{
                 backgroundColor: T.white, borderRadius: 24, padding: '24px',
                 boxShadow: '0 8px 8px rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}60`,
