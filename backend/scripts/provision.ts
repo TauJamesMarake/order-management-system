@@ -123,7 +123,7 @@ async function rollback(authId: string | null, businessId: string | null): Promi
 
 async function main(): Promise<void> {
     console.log('\nProvision New Business')
-    console.log('─'.repeat(40))
+    console.log('─'.repeat(60))
 
     const businessName = await ask('Business name          : ')
     const rawPrefix = await ask('Order prefix (e.g. ND) : ')
@@ -198,7 +198,7 @@ async function main(): Promise<void> {
         process.exit(1)
     }
 
-    console.log('\n' + '─'.repeat(40))
+    console.log('\n' + '─'.repeat(50))
     console.log('Provision complete.')
     console.log()
     console.log('Business')
