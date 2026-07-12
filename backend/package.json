@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "lint": "eslint src/**/*.ts",
     "provision": "tsx scripts/provision.ts",
-    "provision:admin": "tsx scripts/provision-platform-admin.ts"
+    "provision:admin": "tsx scripts/provision_admin.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.4",

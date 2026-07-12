@@ -2,10 +2,6 @@
 
 This repository contains a multi-tenant Order Management System (OMS) implemented as a shared-schema SaaS platform.
 
-The system is designed and validated against **OMS SRS v2.0 (Multi-Tenancy Revision)** located at:
-
-- `./.files/OMS_SRS_v2.0_MultiTenant.docx`
-
 ---
 
 ## Architecture at a Glance
