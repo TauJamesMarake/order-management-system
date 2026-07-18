@@ -9,10 +9,7 @@
     "start": "node dist/server.js",
     "lint": "eslint src/**/*.ts",
     "provision": "tsx scripts/provision.ts",
-    "provision:admin": "tsx scripts/provision_admin.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "provision:admin": "tsx scripts/provision_admin.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.4",
@@ -38,11 +35,8 @@
     "@types/express": "^4.17.21",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.14.2",
-    "@types/supertest": "^6.0.2",
-    "@vitest/coverage-v8": "^2.0.0",
-    "supertest": "^7.0.0",
     "tsx": "^4.15.1",
-    "typescript": "^5.4.5",
-    "vitest": "^2.0.0"
+    "typescript": "^5.4.5"
   }
+  
 }

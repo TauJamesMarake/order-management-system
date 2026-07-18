@@ -1,7 +1,7 @@
 import { supabase } from '../db/supabase'
 
 export async function generateOrderNumber(businessId: string): Promise<string> {
-  const year = new Date().getFullYear() as unknown as number
+  const year = new Date().getFullYear()
 
   const { data, error } = await supabase.rpc('fn_next_order_number', {
     p_business_id: businessId,
@@ -10,7 +10,7 @@ export async function generateOrderNumber(businessId: string): Promise<string> {
 
   if (error || data === null || data === undefined) {
     throw new Error(
-      `Failed to generate order number: ${error?.message ??}`
+      `Failed to generate order number: ${error?.message ?? 'unknown error'}`
     )
   }
 

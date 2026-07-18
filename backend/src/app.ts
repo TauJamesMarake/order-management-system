@@ -17,7 +17,7 @@ import authRoutes from './routes/auth.routes'
 import orderRoutes from './routes/orders.routes'
 import userRoutes from './routes/users.routes'
 import reportRoutes from './routes/reports.routes'
-import platformRoutes from './routes/reports.routes'
+import platformRoutes from './routes/platform.routes'
 
 const app: Application = express()
 
@@ -44,13 +44,26 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'))
 }
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   /* 15 minutes */
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: 'Too many requests. Please try again later.' },
-})
+// const globalLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,   /* 15 minutes */
+//   max: 200,
+//   standardHeaders: true,
+//   legacyHeaders: false,
+//   message: { success: false, error: 'Too many requests. Please try again later.' },
+// })
+
+// Rate limiting is disabled in the test environment to prevent the
+// in-process supertest suite from exhausting the 100 req/15 min window.
+if (process.env.NODE_ENV !== 'test') {
+  const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max:      100,
+    standardHeaders: true,
+    legacyHeaders:   false,
+    message: { success: false, error: 'Too many requests. Please try again later.' },
+  })
+  app.use(globalLimiter)
+}
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,   // 15 minutes
@@ -68,7 +81,7 @@ const exportLimiter = rateLimit({
   message: { success: false, error: 'Export limit reached. Please try again later.' },
 })
 
-app.use(globalLimiter)
+// app.use(globalLimiter)
 
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
@@ -85,9 +98,9 @@ app.get('/health', (_req: Request, res: Response) => {
 app.use('/api/auth', authLimiter, authRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/reports/export', exportLimiter)
 app.use('/api/reports', reportRoutes)
 app.use('/api/platform', platformRoutes)
-app.use('/api/reports/export', exportLimiter)
 
 /* 404 */
 app.use((_req: Request, res: Response) => {

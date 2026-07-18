@@ -87,7 +87,9 @@ export async function getUserById(id: string, businessId: string): Promise<iUser
     .eq('business_id', businessId)
     .single()
 
-  if (error || !data) throw new Error('User not found.')
+  if (error || !data) {
+    throw new Error('User not found')
+  }
   return data as iUser
 }
 
@@ -131,14 +133,12 @@ export async function deactivateUser(id: string, businessId: string): Promise<iU
     throw new Error('User is already deactivated.')
   }
 
-  // Ban in Supabase Auth, invalidates existing JWTs
   await adminAuthClient.auth.admin.updateUserById(id, { ban_duration: '876600h' }) // 100 years
 
   const updated = await updateUser(id, { is_active: false }, businessId)
   return updated
 }
 
-// REACTIVATE
 export async function reactivateUser(id: string, businessId: string): Promise<iUser> {
   const current = await getUserById(id, businessId)
 
@@ -146,7 +146,6 @@ export async function reactivateUser(id: string, businessId: string): Promise<iU
     throw new Error('User is already active.')
   }
 
-  // Unban in Supabase Auth
   await adminAuthClient.auth.admin.updateUserById(id, { ban_duration: 'none' })
 
   const updated = await updateUser(id, { is_active: true }, businessId)

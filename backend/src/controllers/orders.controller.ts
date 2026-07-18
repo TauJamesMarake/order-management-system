@@ -187,7 +187,8 @@ export async function cancelOrder(
     const status =
       err instanceof Error && err.message.includes('not found') ? 404
         : err instanceof Error && err.message.includes('Delivered') ? 400
-          : 500
+          : err instanceof Error && err.message.includes('already cancelled') ? 400
+            : 500
     sendError(res, 'Failed to cancel order.', status)
   }
 }

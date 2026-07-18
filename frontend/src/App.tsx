@@ -3,6 +3,7 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { Dashboard } from '@/pages/Dashboard'
 import { OrdersPage } from '@/pages/Orders'
 import { Reports } from '@/pages/Reports'
+import { Users } from '@/pages/Users'
 import { useAuthStore } from '@/stores/auth.store'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -42,6 +43,13 @@ export default function App() {
         }
       />
 
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <Users />
+          </ProtectedRoute>}
+      />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )

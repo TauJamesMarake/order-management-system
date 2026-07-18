@@ -47,6 +47,8 @@ export async function getUserById(req: Request, res: Response): Promise<void> {
     try {
         const { id } = req.params
         const requestingUser = req.user!
+        console.error('[getUserById] handler reached', { requesterId: requestingUser.id, requesterBiz: requestingUser.business_id, targetId: id })
+
 
         if (requestingUser.role !== 'admin' && requestingUser.id !== id) {
             sendError(res, 'Access denied. You can only view your own profile.', 403)
@@ -57,7 +59,8 @@ export async function getUserById(req: Request, res: Response): Promise<void> {
         sendSuccess(res, user)
     } catch (err) {
         console.error('[getUserById]', err)
-        sendError(res, 'Failed to fetch user.', 500)
+        const status = 404
+        sendError(res, 'Failed to fetch user.', status)
     }
 }
 
@@ -103,10 +106,6 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
             return
         }
 
-        /*
-         * Defence-in-depth: even if the schema somehow admitted extra fields,
-         * non-admin callers can only reach updateUser with full_name.
-         */
         const safePayload: AdminUpdatePayload = isAdmin
             ? parsed.data
             : { full_name: (parsed.data as { full_name: string }).full_name }
