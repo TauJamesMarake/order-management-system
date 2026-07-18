@@ -159,13 +159,12 @@ export function Reports() {
         <main style={{ padding: '32px', flex: 1, display: 'grid', gridTemplateColumns: '1fr', gap: 32, alignItems: 'start' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-            {/* Export action bar — secondary panel tier */}
+            {/* Export action bar */}
             <div
               style={{
                 backgroundColor: T.white,
                 borderRadius: 16,
                 padding: '20px',
-                boxShadow: '0 4px 14px rgba(14,31,31,0.61)',
                 border: `1px solid ${T.mutedCream}60`,
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -215,19 +214,19 @@ export function Reports() {
             ) : (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24, boxShadow: '0 4px 20px rgba(14,31,31,0.61)', borderLeft: `5px solid ${T.teal}` }}>
+                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24, }}>
                     <span style={{ fontSize: 12, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase' }}>Total Value</span>
                     <h2 style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>{fmtZAR(summary.total_value_zar)}</h2>
                   </div>
-                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24, boxShadow: '0 4px 20px rgba(14,31,31,0.61)', borderLeft: `5px solid ${T.orange}` }}>
+                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24 }}>
                     <span style={{ fontSize: 12, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase' }}>Total Orders</span>
                     <h2 style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>{summary.total_orders}</h2>
                   </div>
-                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24, boxShadow: '0 4px 20px rgba(14,31,31,0.61)', borderLeft: `5px solid ${T.deepTeal}` }}>
+                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24 }}>
                     <span style={{ fontSize: 12, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase' }}>Active Orders</span>
                     <h2 style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>{activeOrders}</h2>
                   </div>
-                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24, boxShadow: '0 4px 20px rgba(14,31,31,0.61)', borderLeft: `5px solid ${T.success}` }}>
+                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24 }}>
                     <span style={{ fontSize: 12, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase' }}>Delivered</span>
                     <h2 style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>{deliveredOrders}</h2>
                   </div>
@@ -236,7 +235,7 @@ export function Reports() {
                 {/* Status breakdown strip */}
                 <div style={{
                   backgroundColor: T.white, borderRadius: 16, padding: '18px 24px',
-                  boxShadow: '0 4px 14px rgba(14,31,31,0.61)', border: `1px solid ${T.mutedCream}60`,
+                  border: `1px solid ${T.mutedCream}60`,
                   display: 'flex', gap: 28, flexWrap: 'wrap',
                 }}>
                   {(Object.keys(STATUS_LABEL) as OrderStatus[]).map((status) => (
@@ -247,8 +246,8 @@ export function Reports() {
                   ))}
                 </div>
 
-                {/* Mineral distribution */}
-                <div style={{ backgroundColor: T.white, borderRadius: 20, padding: 24, boxShadow: '0 4px 20px rgba(14,31,31,0.61)', border: `1px solid ${T.mutedCream}60` }}>
+                {/*Data */}
+                <div style={{ backgroundColor: T.white, borderRadius: 20, padding: 24, border: `1px solid ${T.mutedCream}60` }}>
                   <h3 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 700, color: T.inkPrimary, borderBottom: `1px solid ${T.panelBg}`, paddingBottom: 12 }}>
                     Commodity Yield Distribution Ledger
                   </h3>

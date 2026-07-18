@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/stores/auth.store'
 import { T } from '@/components/ColorPalette'
 import { Settings } from '@/components/Settings'
 
@@ -62,7 +61,6 @@ const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: strin
 
 export function SideBar({ activePage }: { activePage: string }) {
     const navigate = useNavigate()
-    const { clearAuth } = useAuthStore()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
     return (
@@ -78,7 +76,6 @@ export function SideBar({ activePage }: { activePage: string }) {
                 height: '100vh',
                 borderBottomRightRadius: 28,
                 overflow: 'hidden',
-                boxShadow: '4px 0 24px rgba(14,31,31,0.15)',
             }}
         >
             <div>
@@ -166,4 +163,3 @@ export function SideBar({ activePage }: { activePage: string }) {
         </aside>
     )
 }
-

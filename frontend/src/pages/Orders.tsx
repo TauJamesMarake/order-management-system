@@ -10,7 +10,6 @@ import { SideBar } from '@/components/SideBar'
 import { Settings } from '@/components/Settings'
 
 import { T } from '@/components/ColorPalette'
-import { CalendarWidget } from '@/components/Calendar'
 
 export type ColorToken = typeof T
 export type ColorTokenKey = keyof ColorToken
@@ -43,12 +42,7 @@ const ROLE_CFG: Record<string, { bg: string; text: string; label: string }> = {
 }
 
 // Custom Professional SVG Icons
-function SearchIcon({ color }: { color: string }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-}
-function BellIcon({ color }: { color: string }) {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-}
+
 function FilterIcon({ color }: { color: string }) {
 
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
@@ -136,14 +130,18 @@ export function OrdersPage() {
   const activeReminders = ordersPage?.items?.filter(o => o.status === 'pending' || o.status === 'confirmed').slice(0, 4) || []
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{
+      display: 'flex',
+      minHeight: '100vh',
+      backgroundColor: T.mutedCream,
+      fontFamily: 'system-ui, -apple-system, sans-serif'
+    }}>
 
       <SideBar activePage={activePage} />
       {isSettingsOpen && (
         <Settings onClose={() => setIsSettingsOpen(false)} />
       )}
 
-      {/* CORE FRAME MAIN COLUMN */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
         <TopBar title={activePage} searchValue={''} onSearchChange={function (v: string): void {
@@ -152,7 +150,6 @@ export function OrdersPage() {
 
         <main style={{ padding: '32px', flex: 1, display: 'grid', gridTemplateColumns: '2.2fr 1fr', gap: 32, alignItems: 'start' }}>
 
-          {/* LEFT CONTAINER FIELD: STATUS TABS, FILTER SUBBAR AND DATA TABLE REGISTERS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24, }}>
 
             {/* Filter */}
@@ -194,7 +191,7 @@ export function OrdersPage() {
 
             <div style={{
               backgroundColor: T.white, borderRadius: 16, padding: '14px 20px',
-              boxShadow: '0 4px 14px rgba(14,31,31,0.61)', border: `1px solid ${T.mutedCream}60`,
+              border: `1px solid ${T.mutedCream}60`,
               display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between'
             }}>
               <div style={{ display: 'flex', gap: 12, flex: 1 }}>
@@ -237,9 +234,8 @@ export function OrdersPage() {
               </button>
             </div>
 
-            {/* Main Orders Document Register Data Table Ledger View */}
             <div style={{
-              backgroundColor: T.white, borderRadius: 20, boxShadow: '0 4px 20px rgba(14,31,31,0.61)',
+              backgroundColor: T.white, borderRadius: 20,
               border: `1px solid ${T.mutedCream}60`, overflow: 'hidden'
             }}>
 
@@ -329,13 +325,12 @@ export function OrdersPage() {
 
           </div>
 
-          {/* RIGHT SIDEBAR COMPONENT: CALENDAR MODULE WINDOW + DISPATCH SYSTEM REMINDERS (Image 1 Architecture Layout Alignment) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
             {/* REMINDERS WIDGET */}
             <div style={{
               backgroundColor: T.white, borderRadius: 24, padding: '24px',
-              boxShadow: '0 8px  8px  rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}60`,
+              border: `1px solid ${T.mutedCream}60`,
               display: 'flex', flexDirection: 'column', gap: 16
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -358,8 +353,8 @@ export function OrdersPage() {
                         padding: '12px 16px',
                         borderRadius: 14,
                         backgroundColor: T.panelBg,
-                        borderLeft: `4px solid ${reminder.status === 'pending' ? T.orange : T.teal}`,
-                        borderRight: `4px solid ${reminder.status === 'pending' ? T.orange : T.teal}`,
+                        // borderLeft: `4px solid ${reminder.status === 'pending' ? T.orange : T.teal}`,
+                        // borderRight: `4px solid ${reminder.status === 'pending' ? T.orange : T.teal}`,
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 4

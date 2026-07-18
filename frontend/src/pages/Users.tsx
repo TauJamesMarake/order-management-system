@@ -164,7 +164,6 @@ export function Users() {
     if (modal?.kind === 'edit') {
       const isSelf = modal.user.id === currentUser?.id
       const dto: Partial<iUserFormState> = { full_name: form.full_name }
-      // Self-lockout guard: never let the edit form change the admin's own role or active state.
       if (!isSelf) {
         dto.role = form.role
         dto.is_active = form.is_active
@@ -224,7 +223,7 @@ export function Users() {
         <main style={{ padding: '32px', flex: 1, display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-            {/* Status tabs — same pattern as Orders.tsx status navigation */}
+            {/* Status tabs */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
               <div style={{ display: 'flex', gap: 8, borderBottom: `1px solid ${T.mutedCream}80`, boxShadow: '0 4px 0px rgba(14,31,31,0.40)', paddingBottom: 4 }}>
                 {[
@@ -279,10 +278,10 @@ export function Users() {
               </button>
             </div>
 
-            {/* Role filter — secondary panel */}
+            {/* Role filter */}
             <div style={{
               backgroundColor: T.white, borderRadius: 16, padding: '14px 20px',
-              boxShadow: '0 4px 14px rgba(14,31,31,0.40)', border: `1px solid ${T.mutedCream}60`,
+              border: `1px solid ${T.mutedCream}60`,
               display: 'flex', gap: 12, alignItems: 'center',
             }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSecondary }}>Filter by role:</span>
@@ -306,21 +305,21 @@ export function Users() {
               )}
             </div>
 
-            {/* Personnel registry table — primary panel */}
+            {/* Personnel registry table */}
             <div style={{
-              backgroundColor: T.white, borderRadius: 20, boxShadow: '0 4px 20px rgba(14,31,31,0.61)',
+              backgroundColor: T.white, borderRadius: 20,
               border: `1px solid ${T.mutedCream}60`, overflow: 'hidden',
             }}>
               {isError && (
                 <div style={{ padding: '14px 20px', backgroundColor: `${T.rust}08`, borderBottom: `1px solid ${T.rust}15` }}>
-                  <span style={{ fontSize: 13, color: T.rust, fontWeight: 500 }}>Failed to retrieve personnel registry. Please check cloud sync logs.</span>
+                  <span style={{ fontSize: 13, color: T.rust, fontWeight: 500 }}>Failed to retrieve personnel registry.</span>
                 </div>
               )}
 
               <div style={{ overflowX: 'auto' }}>
                 {isLoading ? (
                   <div style={{ padding: '80px 0', textAlign: 'center', color: T.inkGhost, fontSize: 14, fontWeight: 500 }}>
-                    Compiling authorized personnel registry...
+                    Compiling registry...
                   </div>
                 ) : !users || users.length === 0 ? (
                   <div style={{ padding: '80px 0', textAlign: 'center' }}>

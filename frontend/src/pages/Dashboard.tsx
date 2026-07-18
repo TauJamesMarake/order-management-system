@@ -41,25 +41,6 @@ const ROLE_CFG: Record<string, { bg: string; text: string; label: string }> = {
   viewer: { bg: T.panelBg, text: T.inkSecondary, label: 'Viewer' },
 }
 
-// Professional SVG Icons
-// function DashIcon({ color }: { color: string }) {
-//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
-// }
-// function OrderIcon({ color }: { color: string }) {
-//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
-// }
-// function ReportIcon({ color }: { color: string }) {
-//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
-// }
-// function UserIcon({ color }: { color: string }) {
-//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-// }
-// function SearchIcon({ color }: { color: string }) {
-//   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-// }
-// function BellIcon({ color }: { color: string }) {
-//   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-// }
 function AlertIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.rust} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
 }
@@ -83,7 +64,8 @@ function CompactStatCard({ label, value, sub, color, loading }: { label: string;
   return (
     <div style={{
       backgroundColor: T.white, borderRadius: 16, padding: '16px 20px',
-      boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}60`,
+      // boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)',
+      border: `1px solid ${T.mutedCream}60`,
       display: 'flex', flexDirection: 'column', gap: 4, position: 'relative', overflow: 'hidden'
     }}>
       <span style={{ fontSize: 11, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -189,7 +171,8 @@ export function Dashboard() {
 
             <div style={{
               backgroundColor: T.white, borderRadius: 24, padding: '24px',
-              boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}60`,
+              // boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)',
+              border: `1px solid ${T.mutedCream}60`,
               display: 'flex', alignItems: 'center', gap: 20, position: 'relative'
             }}>
               <div style={{
@@ -221,7 +204,8 @@ export function Dashboard() {
 
               <div style={{
                 backgroundColor: T.white, borderRadius: 20, padding: '20px',
-                boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}50`
+                // boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)',
+                border: `1px solid ${T.mutedCream}50`
               }}>
                 <div style={{ display: 'flex', gap: 12, overflowX: 'auto', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 140 }}>
@@ -249,7 +233,9 @@ export function Dashboard() {
               </div>
 
               <div style={{
-                backgroundColor: T.white, borderRadius: 24, boxShadow: '0 5px 8px rgba(14, 31, 31, 0.61)',
+                backgroundColor: T.white,
+                borderRadius: 24,
+                // boxShadow: '0 5px 8px rgba(14, 31, 31, 0.61)',
                 border: `1px solid ${T.mutedCream}60`, overflow: 'hidden'
               }}>
                 <div style={{ padding: '20px 24px', borderBottom: `1px solid ${T.mutedCream}60`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -260,13 +246,13 @@ export function Dashboard() {
                 {isError && (
                   <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 10, backgroundColor: `${T.rust}10`, borderBottom: `1px solid ${T.rust}20` }}>
                     <AlertIcon />
-                    <span style={{ fontSize: 13, color: T.rust, fontWeight: 500 }}>System was unable to synchronize recent ledger changes. Please refresh connection.</span>
+                    <span style={{ fontSize: 13, color: T.rust, fontWeight: 500 }}>System was unable to synchronise recent ledger changes. Please refresh connection.</span>
                   </div>
                 )}
 
                 <div style={{ overflowX: 'auto' }}>
                   {ordersLoading ? (
-                    <div style={{ padding: '60px 0', textAlign: 'center', color: T.inkGhost, fontSize: 14, fontWeight: 500 }}>Synchronizing secure pipeline ledger stream...</div>
+                    <div style={{ padding: '60px 0', textAlign: 'center', color: T.inkGhost, fontSize: 14, fontWeight: 500 }}>Synchronising secure pipeline ledger stream...</div>
                   ) : !ordersPage || ordersPage.items.length === 0 ? (
                     <div style={{ padding: '60px 0', textAlign: 'center' }}>
                       <p style={{ margin: '0 0 8px', fontSize: 14, color: T.inkGhost, fontWeight: 500 }}>No register entries match specified filter metrics.</p>
@@ -326,7 +312,7 @@ export function Dashboard() {
 
               <div style={{
                 backgroundColor: T.white, borderRadius: 24, padding: '24px',
-                boxShadow: '0 8px 8px rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}60`,
+                border: `1px solid ${T.mutedCream}60`,
                 display: 'flex', flexDirection: 'column', gap: 16
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -345,7 +331,6 @@ export function Dashboard() {
                     reminderOrders.map((order) => (
                       <div key={order.id} style={{
                         padding: '12px 14px', borderRadius: 14, backgroundColor: T.panelBg,
-                        borderLeft: `4px solid ${order.status === 'pending' ? T.orange : T.teal}`,
                         display: 'flex', flexDirection: 'column', gap: 4
                       }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -15,7 +15,8 @@ export const CalendarWidget = () => {
     return (
         <><div style={{
             backgroundColor: T.white, borderRadius: 24, padding: '24px',
-            boxShadow: '0 8px 8px rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}60`
+            // boxShadow: '0 8px 8px rgba(14, 31, 31, 0.61)',
+            border: `1px solid ${T.mutedCream}60`
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <span style={{ fontSize: 15, fontWeight: 700, color: T.inkPrimary }}>
