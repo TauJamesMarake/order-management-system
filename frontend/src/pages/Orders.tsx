@@ -138,7 +138,7 @@ export function OrdersPage() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
-      <SideBar activePage={activePage} onSettingsClick={() => setIsSettingsOpen(true)} />
+      <SideBar activePage={activePage} />
       {isSettingsOpen && (
         <Settings onClose={() => setIsSettingsOpen(false)} />
       )}
@@ -146,19 +146,17 @@ export function OrdersPage() {
       {/* CORE FRAME MAIN COLUMN */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
-        {/* TOP PANEL CONTROL BAR */}
         <TopBar title={activePage} searchValue={''} onSearchChange={function (v: string): void {
           throw new Error('Function not implemented.')
         }} />
 
-        {/* WORKSPACE APP SECTION SPLIT LAYOUT GRID */}
         <main style={{ padding: '32px', flex: 1, display: 'grid', gridTemplateColumns: '2.2fr 1fr', gap: 32, alignItems: 'start' }}>
 
           {/* LEFT CONTAINER FIELD: STATUS TABS, FILTER SUBBAR AND DATA TABLE REGISTERS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24, }}>
 
-            {/* Status Metric Navigation Filter Tab */}
-            <div style={{ display: 'flex', gap: 8, borderBottom: `1px solid ${T.mutedCream}80`, boxShadow: '0 4px 0px rgba(14,31,31,0.40)', paddingBottom: 4, overflowX: 'auto',  }}>
+            {/* Filter */}
+            <div style={{ display: 'flex', gap: 8, borderBottom: `1px solid ${T.mutedCream}80`, boxShadow: '0 4px 0px rgba(14,31,31,0.40)', paddingBottom: 4, overflowX: 'auto', }}>
               {[
                 { label: 'All Orders', count: summary?.total_today ?? 0, value: '' },
                 { label: 'Pending Action', count: summary?.by_status?.pending ?? 0, value: 'pending' },
@@ -194,7 +192,6 @@ export function OrdersPage() {
               })}
             </div>
 
-            {/* Quick Filter Configuration Input Matrix Subbar */}
             <div style={{
               backgroundColor: T.white, borderRadius: 16, padding: '14px 20px',
               boxShadow: '0 4px 14px rgba(14,31,31,0.61)', border: `1px solid ${T.mutedCream}60`,
@@ -309,7 +306,6 @@ export function OrdersPage() {
                 )}
               </div>
 
-              {/* Secure Pagination Action Controls Foot Bar */}
               {ordersPage && totalPages > 1 && (
                 <div style={{ padding: '16px 24px', borderTop: `1px solid ${T.mutedCream}60`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: T.white }}>
                   <span style={{ fontSize: 12, color: T.inkSecondary, fontWeight: 500 }}>
@@ -336,10 +332,7 @@ export function OrdersPage() {
           {/* RIGHT SIDEBAR COMPONENT: CALENDAR MODULE WINDOW + DISPATCH SYSTEM REMINDERS (Image 1 Architecture Layout Alignment) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
-            {/* CALENDAR WIDGET) */}
-            <CalendarWidget />
-
-            {/* ACTION PIPELINE REMINDERS APP WIDGET */}
+            {/* REMINDERS WIDGET */}
             <div style={{
               backgroundColor: T.white, borderRadius: 24, padding: '24px',
               boxShadow: '0 8px  8px  rgba(14, 31, 31, 0.61)', border: `1px solid ${T.mutedCream}60`,
@@ -352,7 +345,6 @@ export function OrdersPage() {
                 </span>
               </div>
 
-              {/* Interactive Checklist style reminders view list layer */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {activeReminders.length === 0 ? (
                   <div style={{ padding: '20px 0', textAlign: 'center', color: T.inkGhost, fontSize: 12, fontWeight: 500 }}>
@@ -363,9 +355,14 @@ export function OrdersPage() {
                     <div
                       key={reminder.id}
                       style={{
-                        padding: '12px 16px', borderRadius: 14, backgroundColor: T.panelBg,
+                        padding: '12px 16px',
+                        borderRadius: 14,
+                        backgroundColor: T.panelBg,
                         borderLeft: `4px solid ${reminder.status === 'pending' ? T.orange : T.teal}`,
-                        display: 'flex', flexDirection: 'column', gap: 4
+                        borderRight: `4px solid ${reminder.status === 'pending' ? T.orange : T.teal}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

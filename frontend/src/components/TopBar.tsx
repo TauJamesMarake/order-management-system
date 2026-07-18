@@ -108,8 +108,8 @@ export function TopBar({
         top: 0,
         zIndex: 40,
         // boxShadow: '0 4px 14px rgba(14, 31, 31, 0.23)',
-        borderBottom: `4px solid ${T.darkBg}60`,
-        borderBottomLeftRadius: 28,
+        // borderBottom: `1px solid ${T.charcoal}60`,
+        borderLeft: `1px solid ${T.charcoal}100`,
       }}
     >
       <div>
@@ -176,7 +176,7 @@ export function TopBar({
         </span>
         <input
           type="text"
-          placeholder="Search order reference code, buyer entity, minerals..."
+          placeholder="Search..."
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
           style={{
