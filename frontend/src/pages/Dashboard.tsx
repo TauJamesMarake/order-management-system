@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { SideBar } from '@/components/SideBar'
 import { Settings } from '@/components/Settings'
 import { T } from '@/components/ColorPalette'
-import type { Order, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus } from '@/types'
+import type { iOrder, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus } from '@/types'
 import { TopBar } from '@/components/TopBar'
 import { CalendarWidget } from '@/components/Calendar'
 
@@ -64,7 +64,6 @@ function CompactStatCard({ label, value, sub, color, loading }: { label: string;
   return (
     <div style={{
       backgroundColor: T.white, borderRadius: 16, padding: '16px 20px',
-      // boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)',
       border: `1px solid ${T.mutedCream}60`,
       display: 'flex', flexDirection: 'column', gap: 4, position: 'relative', overflow: 'hidden'
     }}>
@@ -129,9 +128,9 @@ export function Dashboard() {
     limit: 10, // Optimised for Mediline double-column layout view
   }
 
-  const { data: ordersPage, isLoading: ordersLoading, isError } = useQuery<iPaginatedResult<Order>>({
+  const { data: ordersPage, isLoading: ordersLoading, isError } = useQuery<iPaginatedResult<iOrder>>({
     queryKey: ['orders', orderParams],
-    queryFn: () => get<iPaginatedResult<Order>>('/orders', { params: orderParams }),
+    queryFn: () => get<iPaginatedResult<iOrder>>('/orders', { params: orderParams }),
     enabled: !!user,
   })
 
@@ -171,16 +170,10 @@ export function Dashboard() {
 
             <div style={{
               backgroundColor: T.white, borderRadius: 24, padding: '24px',
-              // boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)',
               border: `1px solid ${T.mutedCream}60`,
               display: 'flex', alignItems: 'center', gap: 20, position: 'relative'
             }}>
-              <div style={{
-                width: 70, height: 70, borderRadius: '50%', backgroundColor: `${T.teal}15`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-              }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={T.teal} strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>
-              </div>
+
               <div>
                 <span style={{ fontSize: 11, color: T.inkSecondary, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Active Aggregate Value</span>
                 <h2 style={{ margin: '4px 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>
@@ -204,7 +197,6 @@ export function Dashboard() {
 
               <div style={{
                 backgroundColor: T.white, borderRadius: 20, padding: '20px',
-                // boxShadow: '0 4px 8px rgba(14, 31, 31, 0.61)',
                 border: `1px solid ${T.mutedCream}50`
               }}>
                 <div style={{ display: 'flex', gap: 12, overflowX: 'auto', flexWrap: 'wrap' }}>
@@ -235,7 +227,6 @@ export function Dashboard() {
               <div style={{
                 backgroundColor: T.white,
                 borderRadius: 24,
-                // boxShadow: '0 5px 8px rgba(14, 31, 31, 0.61)',
                 border: `1px solid ${T.mutedCream}60`, overflow: 'hidden'
               }}>
                 <div style={{ padding: '20px 24px', borderBottom: `1px solid ${T.mutedCream}60`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

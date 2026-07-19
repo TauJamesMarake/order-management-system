@@ -1,7 +1,10 @@
+import { Request } from 'express'
+
 export type UserRole = 'admin' | 'clerk' | 'viewer'
 
 export interface iUser {
   id: string
+  business_id: string
   email: string
   full_name: string
   role: UserRole
@@ -9,25 +12,14 @@ export interface iUser {
   created_at: string
 }
 
-export interface iAuthUser {
+export interface iPlatformAdmin {
   id: string
   email: string
   full_name: string
-  role: UserRole
+  is_active: boolean
+  created_at: string
 }
 
-export interface iLoginCredentials {
-  email: string
-  password: string
-}
-
-export interface LoginResult {
-  token: string
-  refresh_token: string
-  user: iAuthUser
-}
-
-// Orders
 export type OrderStatus =
   | 'pending'
   | 'confirmed'
@@ -37,6 +29,7 @@ export type OrderStatus =
 
 export interface iOrder {
   id: string
+  business_id: string
   order_number: string
   client_name: string
   mineral_type: string
@@ -48,9 +41,7 @@ export interface iOrder {
   created_by: string
   created_at: string
   updated_at: string
-  creator_id?: string
-  creator_name?: string
-  creator_email?: string
+  creator?: Pick<iUser, 'id' | 'full_name' | 'email'>
 }
 
 export interface iCreateOrderDTO {
@@ -70,35 +61,39 @@ export interface iUpdateOrderDTO {
   status?: OrderStatus
 }
 
-export interface iOrderFilters {
-  status?: OrderStatus
-  mineral_type?: string
-  client_name?: string
-  date_from?: string
-  date_to?: string
-  search?: string
-  page?: number
-  limit?: number
-}
-
-// Audit
-export type User = iAuthUser
-export type Order = iOrder
-export type AuthUser = iAuthUser
-
 export interface iAuditLog {
   id: string
+  business_id: string
   order_id: string
   changed_by: string
   field_changed: string
   old_value: string | null
   new_value: string | null
   changed_at: string
-  changer?: {
-    id: string
-    full_name: string
-    email: string
-  }
+  changer?: Pick<iUser, 'id' | 'full_name' | 'email'>
+}
+
+// API Responses
+export interface iApiSuccess<T> {
+  success: true
+  data: T
+  message?: string
+}
+
+export interface iApiError {
+  success: false
+  error: string
+  details?: unknown
+}
+
+export type ApiResponse<T> = iApiSuccess<T> | iApiError
+
+export interface iPaginatedResult<T> {
+  items: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 // Reports
@@ -122,28 +117,47 @@ export interface iDashboardSummary {
   total_value_active_zar: number
 }
 
-// API Response wrappers
-export interface iApiSuccess<T> {
-  success: true
-  data: T
-  message?: string
+
+export interface iOrderFilters {
+  status?: OrderStatus
+  mineral_type?: string
+  client_name?: string
+  date_from?: string
+  date_to?: string
+  search?: string
+  page?: number
+  limit?: number
 }
 
-export interface iApiError {
-  success: false
-  error: string
-  details?: unknown
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string
+        email: string
+        role: UserRole
+        business_id: string
+      }
+      platformAdmin?: {
+        id: string
+        email: string
+      }
+    }
+  }
 }
 
-export type ApiResponse<T> = iApiSuccess<T> | iApiError
-
-export interface iPaginatedResult<T> {
-  items: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
+export interface iAuthenticatedRequest extends Request {
+  user: {
+    id: string
+    email: string
+    role: UserRole
+    business_id: string
+  }
 }
 
-export type Nullable<T> = T | null
-export type PartialNullable<T> = { [K in keyof T]?: T[K] | null }
+export interface iPlatformAuthenticatedRequest extends Request {
+  platformAdmin: {
+    id: string
+    email: string
+  }
+}

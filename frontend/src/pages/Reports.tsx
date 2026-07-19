@@ -120,7 +120,6 @@ export function Reports() {
                 padding: 48,
                 textAlign: 'center',
                 maxWidth: 480,
-                boxShadow: '0 4px 20px rgba(14,31,31,0.61)',
                 border: `1px solid ${T.mutedCream}`,
               }}
             >
@@ -172,7 +171,7 @@ export function Reports() {
               }}
             >
               <div>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.inkPrimary }}>Isolated Data Extraction Streams</h3>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.inkPrimary }}>Data Extraction Streams</h3>
                 <p style={{ margin: '4px 0 0', fontSize: 12, color: T.inkGhost }}>Exports are compiled directly in-memory and securely bounded by tenant context fields.</p>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
@@ -204,52 +203,58 @@ export function Reports() {
             </div>
 
             {isLoading ? (
-              <div style={{ backgroundColor: T.white, borderRadius: 20, padding: 80, textAlign: 'center', color: T.inkGhost, fontSize: 14, fontWeight: 500, boxShadow: '0 4px 20px rgba(14,31,31,0.61)' }}>
-                Resolving isolated distributed ledger metrics...
+              <div style={{ backgroundColor: T.white, borderRadius: 20, padding: 80, textAlign: 'center', color: T.inkGhost, fontSize: 14, fontWeight: 500 }}>
+                Loading ledger metrics...
               </div>
             ) : isError || !summary ? (
-              <div style={{ backgroundColor: T.white, borderRadius: 20, padding: 40, textAlign: 'center', color: T.rust, fontSize: 14, fontWeight: 500, boxShadow: '0 4px 20px rgba(14,31,31,0.61)' }}>
+              <div style={{ backgroundColor: T.white, borderRadius: 20, padding: 40, textAlign: 'center', color: T.rust, fontSize: 14, fontWeight: 500, }}>
                 Gateway routing anomaly occurred trying to aggregate requested data frames.
               </div>
             ) : (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24, }}>
-                    <span style={{ fontSize: 12, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase' }}>Total Value</span>
-                    <h2 style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>{fmtZAR(summary.total_value_zar)}</h2>
-                  </div>
-                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24 }}>
-                    <span style={{ fontSize: 12, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase' }}>Total Orders</span>
-                    <h2 style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>{summary.total_orders}</h2>
-                  </div>
-                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24 }}>
-                    <span style={{ fontSize: 12, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase' }}>Active Orders</span>
-                    <h2 style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>{activeOrders}</h2>
-                  </div>
-                  <div style={{ backgroundColor: T.white, borderRadius: 16, padding: 24 }}>
-                    <span style={{ fontSize: 12, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase' }}>Delivered</span>
-                    <h2 style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>{deliveredOrders}</h2>
-                  </div>
+                <div style={{
+                  backgroundColor: T.white, borderRadius: 20,
+                  border: `1px solid ${T.mutedCream}60`, display: 'flex', overflow: 'hidden',
+                }}>
+                  {[
+                    { label: 'Total Value', value: fmtZAR(summary.total_value_zar) },
+                    { label: 'Total Orders', value: summary.total_orders },
+                    { label: 'Active Orders', value: activeOrders },
+                    { label: 'Delivered', value: deliveredOrders },
+                  ].map((stat, idx, arr) => (
+                    <div
+                      key={stat.label}
+                      style={{
+                        flex: 1, padding: '22px 28px',
+                        borderRight: idx < arr.length - 1 ? `1px solid ${T.mutedCream}` : 'none',
+                        display: 'flex', flexDirection: 'column', gap: 8,
+                      }}
+                    >
+                      <span style={{ fontSize: 12, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase' }}>{stat.label}</span>
+                      <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>{stat.value}</h2>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Status breakdown strip */}
                 <div style={{
                   backgroundColor: T.white, borderRadius: 16, padding: '18px 24px',
                   border: `1px solid ${T.mutedCream}60`,
-                  display: 'flex', gap: 28, flexWrap: 'wrap',
+                  display: 'flex', gap: 28,
+                  // flexWrap: 'wrap',
                 }}>
                   {(Object.keys(STATUS_LABEL) as OrderStatus[]).map((status) => (
-                    <div key={status} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
                       <span style={{ fontSize: 20, fontWeight: 800, color: T.inkPrimary }}>{summary.by_status[status] ?? 0}</span>
                       <span style={{ fontSize: 12, fontWeight: 600, color: T.inkGhost }}>{STATUS_LABEL[status]}</span>
                     </div>
                   ))}
                 </div>
 
-                {/*Data */}
+                {/* Mineral distribution */}
                 <div style={{ backgroundColor: T.white, borderRadius: 20, padding: 24, border: `1px solid ${T.mutedCream}60` }}>
                   <h3 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 700, color: T.inkPrimary, borderBottom: `1px solid ${T.panelBg}`, paddingBottom: 12 }}>
-                    Commodity Yield Distribution Ledger
+                    Yield Distribution Ledger
                   </h3>
 
                   {mineralEntries.length === 0 ? (
@@ -290,7 +295,7 @@ export function Reports() {
                                 <Tooltip
                                   formatter={(value: any, name: any) => [fmtZAR(Number(value)), String(name)]}
                                   labelFormatter={(label: any) => `mineral: ${String(label)}`}
-                                  contentStyle={{ background: T.white, border: `1px solid ${T.mutedCream}`, borderRadius: 10, boxShadow: '0 4px 14px rgba(14,31,31,0.15)' }}
+                                  contentStyle={{ background: T.white, border: `1px solid ${T.mutedCream}`, borderRadius: 10 }}
                                 />
                                 <Pie
                                   data={mineralEntries}
@@ -337,7 +342,7 @@ export function Reports() {
                                 />
                                 <Tooltip
                                   formatter={(value: any) => [fmtZAR(Number(value))]}
-                                  contentStyle={{ background: T.white, border: `1px solid ${T.mutedCream}`, borderRadius: 10, boxShadow: '0 4px 14px rgba(14,31,31,0.15)' }}
+                                  contentStyle={{ background: T.white, border: `1px solid ${T.mutedCream}`, borderRadius: 10 }}
                                 />
                                 <Legend
                                   verticalAlign="top"
