@@ -61,18 +61,18 @@ export function Settings({ onClose }: iSettingsProps) {
         fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
       }}
     >
-      {/* Backdrop Dismissal Layer */}
+      {/* Backdrop Dismissal */}
       <div
         onClick={onClose}
         style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: -1, cursor: 'default' }}
       />
 
+      {/* Flyout Panel Box Content */}
       <div
         style={{
           width: 310,
           backgroundColor: T.white,
           borderRadius: 16,
-          boxShadow: '0 10px 30px rgba(14,31,31,0.25)',
           border: `1px solid ${T.mutedCream}`,
           padding: 20,
           animation: 'slideUp 0.15s ease-out forwards',
@@ -150,12 +150,6 @@ export function Settings({ onClose }: iSettingsProps) {
           </span>
           <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-              <span style={{ color: T.inkSecondary }}>Business Context ID:</span>
-              <span style={{ fontFamily: "ui-monospace, 'Cascadia Code', monospace", fontSize: 11, fontWeight: 600, color: T.inkPrimary }}>
-                {user.business_id ? `${user.business_id.substring(0, 8)}...` : 'N/A'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
               <span style={{ color: T.inkSecondary }}>Assigned Profile Role:</span>
               <span
                 style={{
@@ -186,6 +180,7 @@ export function Settings({ onClose }: iSettingsProps) {
           </p>
         </div>
 
+        {/* Logout Action */}
         <button
           onClick={() => {
             clearAuth()

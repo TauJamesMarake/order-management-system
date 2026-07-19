@@ -145,7 +145,6 @@ export function Dashboard() {
   const roleStyle = ROLE_CFG[user.role] ?? { bg: T.panelBg, text: T.inkSecondary, label: user.role }
   const initials = user.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
-  // Pull top upcoming orders as interactive reminders
   const reminderOrders = ordersPage?.items.filter(o => o.status === 'pending' || o.status === 'confirmed').slice(0, 3) ?? []
 
   return (
@@ -183,7 +182,6 @@ export function Dashboard() {
               </div>
             </div>
 
-            {/* Statistical Data Layout Matrix Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
               <CompactStatCard label="Orders Today" value={summary?.total_today ?? 0} color={T.orange} loading={summaryLoading} />
               <CompactStatCard label="Awaiting Action" value={summary?.by_status?.pending ?? 0} sub="Pending status" color={T.warning} loading={summaryLoading} />
@@ -322,6 +320,7 @@ export function Dashboard() {
                     reminderOrders.map((order) => (
                       <div key={order.id} style={{
                         padding: '12px 14px', borderRadius: 14, backgroundColor: T.panelBg,
+                        boxShadow: `0 2px 2px ${T.orange}`,
                         display: 'flex', flexDirection: 'column', gap: 4
                       }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

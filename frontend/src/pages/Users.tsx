@@ -78,7 +78,11 @@ interface iUserFormState {
 }
 
 const FORM_DEFAULTS: iUserFormState = {
-  email: '', password: '', full_name: '', role: 'clerk', is_active: true,
+  email: '',
+  password: '',
+  full_name: '',
+  role: 'clerk',
+  is_active: true,
 }
 
 type ModalMode = { kind: 'create' } | { kind: 'edit'; user: iUser } | null
@@ -196,7 +200,7 @@ export function Users() {
           <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
             <div style={{
               backgroundColor: T.white, borderRadius: 20, padding: 48, textAlign: 'center', maxWidth: 480,
-              boxShadow: '0 4px 20px rgba(14,31,31,0.61)', border: `1px solid ${T.mutedCream}`,
+              border: `1px solid ${T.mutedCream}`,
             }}>
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: 64, height: 64, margin: '0 auto' }}>
                 <LockIcon />
@@ -225,7 +229,7 @@ export function Users() {
 
             {/* Status tabs */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
-              <div style={{ display: 'flex', gap: 8, borderBottom: `1px solid ${T.mutedCream}80`, boxShadow: '0 4px 0px rgba(14,31,31,0.40)', paddingBottom: 4 }}>
+              <div style={{ display: 'flex', gap: 8, borderBottom: `1px solid ${T.mutedCream}80`, paddingBottom: 4 }}>
                 {[
                   { label: 'All Personnel', value: '' as const, count: counts.all },
                   { label: 'Active', value: 'active' as const, count: counts.active },
@@ -411,7 +415,7 @@ export function Users() {
             onSubmit={handleSubmit}
             style={{
               position: 'relative', width: 440, backgroundColor: T.white, borderRadius: 20,
-              padding: 28, boxShadow: '0 20px 60px rgba(14,31,31,0.45)', border: `1px solid ${T.mutedCream}`,
+              padding: 28, border: `1px solid ${T.mutedCream}`,
               display: 'flex', flexDirection: 'column', gap: 16,
             }}
           >

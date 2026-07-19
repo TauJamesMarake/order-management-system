@@ -36,6 +36,7 @@ const STATUS_CFG: Record<string, { bg: string; text: string; dot: string; label:
 }
 
 // Custom Professional SVG Icons
+
 function FilterIcon({ color }: { color: string }) {
 
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
@@ -93,7 +94,7 @@ const ORDER_FORM_DEFAULTS: iOrderFormState = {
 
 type OrderModalMode = { kind: 'create' } | { kind: 'edit'; order: iOrder } | null
 
-// Only admins and clerks may create/edit/cancel orders (viewers are read-only) — mirrors requireRole('admin','clerk') server-side.
+// Only admins and clerks may create/edit/cancel orders (viewers are read-only)
 function canManageOrders(role: string | undefined): boolean {
   return role === 'admin' || role === 'clerk'
 }
@@ -155,6 +156,7 @@ export function OrdersPage() {
   }
 
   const totalPages = ordersPage ? Math.ceil(ordersPage.total / ordersPage.limit) : 0
+
   const invalidateOrderData = () => {
     queryClient.invalidateQueries({ queryKey: ['orders'] })
     queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
@@ -242,21 +244,24 @@ export function OrdersPage() {
   const activeReminders = ordersPage?.items?.filter(o => o.status === 'pending' || o.status === 'confirmed').slice(0, 4) || []
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{
+      display: 'flex',
+      minHeight: '100vh',
+      backgroundColor: T.mutedCream,
+      fontFamily: 'system-ui, -apple-system, sans-serif'
+    }}>
 
       <SideBar activePage={activePage} />
       {isSettingsOpen && (
         <Settings onClose={() => setIsSettingsOpen(false)} />
       )}
 
-      {/* CORE FRAME MAIN COLUMN */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
         <TopBar title={activePage} searchValue={filters.search} onSearchChange={(v: string) => setFilter('search', v)} />
 
         <main style={{ padding: '32px', flex: 1, display: 'grid', gridTemplateColumns: '2.2fr 1fr', gap: 32, alignItems: 'start' }}>
 
-          {/* LEFT CONTAINER FIELD: STATUS TABS, FILTER SUBBAR AND DATA TABLE REGISTERS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24, }}>
 
             {/* Filter */}
@@ -358,7 +363,6 @@ export function OrdersPage() {
               </button>
             </div>
 
-            {/* Main Orders Document Register Data Table Ledger View */}
             <div style={{
               backgroundColor: T.white, borderRadius: 20,
               border: `1px solid ${T.mutedCream}60`, overflow: 'hidden'
@@ -515,7 +519,8 @@ export function OrdersPage() {
                         padding: '12px 16px',
                         borderRadius: 14,
                         backgroundColor: T.panelBg,
-                        boxShadow: `0 4px  3px ${reminder.status === 'pending' ? T.orange : T.teal}`,
+                        boxShadow: `0 2px 2px ${T.orange}`,
+
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 4
@@ -548,14 +553,13 @@ export function OrdersPage() {
         <div style={{
           position: 'fixed', inset: 0, backgroundColor: 'rgba(14,31,31,0.45)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
-          margin: 500,
         }}>
           <div onClick={closeOrderModal} style={{ position: 'absolute', inset: 0 }} />
           <form
             onSubmit={handleOrderSubmit}
             style={{
               position: 'relative', width: 460, backgroundColor: T.white, borderRadius: 20,
-              border: `1px solid ${T.mutedCream}`,
+              padding: 28, border: `1px solid ${T.mutedCream}`,
               display: 'flex', flexDirection: 'column', gap: 16,
             }}
           >
@@ -586,7 +590,7 @@ export function OrdersPage() {
             </label>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSecondary }}>Item Name</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSecondary }}>Mineral Type</span>
               <input
                 required
                 minLength={2}
