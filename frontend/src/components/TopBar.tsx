@@ -97,7 +97,7 @@ export function TopBar({
   return (
     <header
       style={{
-        height: 84,
+        height: 85,
         backgroundColor: T.white,
         padding: '0 32px',
         display: 'flex',
@@ -106,7 +106,7 @@ export function TopBar({
         position: 'sticky',
         top: 0,
         zIndex: 40,
-        // borderBottom: `1px solid ${T.charcoal}60`,
+        borderBottom: `1px solid ${T.charcoal}`,
         borderLeft: `1px solid ${T.charcoal}100`,
       }}
     >
@@ -129,18 +129,7 @@ export function TopBar({
               Operational control panel
             </p>
           </div>
-        )
-          : title.toLowerCase() === 'orders' ? (
-            <div>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
-                Orders
-              </h1>
-              <p style={{ margin: 0, fontSize: 12, color: T.inkGhost, fontWeight: 500 }}>
-                Operational control panel
-              </p>
-            </div>
-          ) :
-            title.toLowerCase() === 'reports' ? (
+        ) : title.toLowerCase() === 'reports' ? (
               <div>
                 <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
                   Reports
@@ -150,6 +139,16 @@ export function TopBar({
                 </p>
               </div>
             )
+              : title.toLowerCase() === 'notifications' ? (
+                <div>
+                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
+                    Notifications
+                  </h1>
+                  <p style={{ margin: 0, fontSize: 12, color: T.inkGhost, fontWeight: 500 }}>
+                    Alerts, reminders & activity feed
+                  </p>
+                </div>
+              )
               : (
                 <div>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>

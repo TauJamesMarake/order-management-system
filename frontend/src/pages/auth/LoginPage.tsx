@@ -6,7 +6,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { post } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth.store'
-import { type LoginResult, type iAuthUser } from '@/types'
+import { type iLoginResult, type iAuthUser } from '@/types'
 import { T } from '@/lib/theme'
 
 // Validation schemas
@@ -135,7 +135,7 @@ function UnderlineInput({
 function BrandPanel() {
   return (
     <div style={{
-      width: '45%',
+      width: '60%',
       flexShrink: 0,
       backgroundColor: T.teal,
       display: 'flex',
@@ -242,8 +242,8 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
     reValidateMode: 'onChange',
   })
 
-  const mutation = useMutation<LoginResult, Error, SignInValues>({
-    mutationFn: (creds) => post<LoginResult>('/auth/login', creds),
+  const mutation = useMutation<iLoginResult, Error, SignInValues>({
+    mutationFn: (creds) => post<iLoginResult>('/auth/login', creds),
     onSuccess: (result) => {
       setAuth(result.user, result.token)
       onSuccess()

@@ -84,7 +84,6 @@ export function Reports() {
     staleTime: 60_000,
   })
 
-  // by_mineral -> sorted array for charts/table
   const mineralEntries = useMemo(() => {
     const term = searchValue.trim().toLowerCase()
     return Object.entries(summary?.by_mineral ?? {})

@@ -96,6 +96,7 @@ export function Users() {
 
   const [roleFilter, setRoleFilter] = useState<'' | UserRole>('')
   const [statusFilter, setStatusFilter] = useState<'' | 'active' | 'inactive'>('')
+  const [searchValue, setSearchValue] = useState('')
 
   const [modal, setModal] = useState<ModalMode>(null)
   const [form, setForm] = useState<iUserFormState>(FORM_DEFAULTS)
@@ -179,6 +180,15 @@ export function Users() {
   const isSubmitting = createMutation.isPending || updateMutation.isPending
   const editingIsSelf = modal?.kind === 'edit' && modal.user.id === currentUser?.id
 
+  const filteredUsers = useMemo(() => {
+    const list = users ?? []
+    const term = searchValue.trim().toLowerCase()
+    if (!term) return list
+    return list.filter((u) =>
+      u.full_name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term)
+    )
+  }, [users, searchValue])
+
   const counts = useMemo(() => {
     const list = users ?? []
     return {
@@ -222,7 +232,7 @@ export function Users() {
       {isSettingsOpen && <Settings onClose={() => setIsSettingsOpen(false)} />}
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <TopBar title="users" searchValue="" onSearchChange={() => { }} />
+        <TopBar title="users" searchValue={searchValue} onSearchChange={setSearchValue} />
 
         <main style={{ padding: '32px', flex: 1, display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -299,9 +309,9 @@ export function Users() {
                 <option value="clerk">Clerk</option>
                 <option value="viewer">Viewer</option>
               </select>
-              {(roleFilter || statusFilter) && (
+              {(roleFilter || statusFilter || searchValue) && (
                 <button
-                  onClick={() => { setRoleFilter(''); setStatusFilter('') }}
+                  onClick={() => { setRoleFilter(''); setStatusFilter(''); setSearchValue('') }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: T.teal, fontWeight: 600, textDecoration: 'underline', marginLeft: 'auto' }}
                 >
                   Clear filters
@@ -325,10 +335,14 @@ export function Users() {
                   <div style={{ padding: '80px 0', textAlign: 'center', color: T.inkGhost, fontSize: 14, fontWeight: 500 }}>
                     Compiling registry...
                   </div>
-                ) : !users || users.length === 0 ? (
+                ) : !filteredUsers || filteredUsers.length === 0 ? (
                   <div style={{ padding: '80px 0', textAlign: 'center' }}>
-                    <p style={{ margin: '0 0 10px', fontSize: 14, color: T.inkGhost, fontWeight: 500 }}>No personnel records match current parameters.</p>
-                    <button onClick={() => { setRoleFilter(''); setStatusFilter('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: T.teal, fontWeight: 600, textDecoration: 'underline' }}>Clear Constraints</button>
+                    <p style={{ margin: '0 0 10px', fontSize: 14, color: T.inkGhost, fontWeight: 500 }}>
+                      {searchValue.trim()
+                        ? `No personnel matching "${searchValue}" found.`
+                        : 'No personnel records match current parameters.'}
+                    </p>
+                    <button onClick={() => { setRoleFilter(''); setStatusFilter(''); setSearchValue('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: T.teal, fontWeight: 600, textDecoration: 'underline' }}>Clear Constraints</button>
                   </div>
                 ) : (
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -343,7 +357,7 @@ export function Users() {
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map((u) => {
+                      {filteredUsers.map((u) => {
                         const isSelf = u.id === currentUser.id
                         return (
                           <tr key={u.id} style={{ borderBottom: `1px solid ${T.panelBg}` }}>
