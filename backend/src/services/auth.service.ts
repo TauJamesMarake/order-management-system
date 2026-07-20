@@ -21,6 +21,7 @@ export interface iLoginResult {
     full_name: string
     role: string
     business_id: string
+    business_name: string
   }
 }
 
@@ -48,6 +49,7 @@ export async function login(
       is_active,
       business_id,
       business:businesses!inner (
+        name,
         is_active
       )
     `)
@@ -79,6 +81,7 @@ export async function login(
       full_name: profile.full_name,
       role: profile.role,
       business_id: profile.business_id,
+      business_name: business.name,
     },
   }
 }

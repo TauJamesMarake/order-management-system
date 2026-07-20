@@ -35,12 +35,6 @@ const STATUS_CFG: Record<string, { bg: string; text: string; dot: string; label:
   cancelled: { bg: '#FAE8E5', text: '#6B1A10', dot: T.rust, label: 'Cancelled' },
 }
 
-const ROLE_CFG: Record<string, { bg: string; text: string; label: string }> = {
-  admin: { bg: '#FEF0E8', text: T.rust, label: 'Administrator' },
-  clerk: { bg: '#E0F0F0', text: T.deepTeal, label: 'Clerk' },
-  viewer: { bg: T.panelBg, text: T.inkSecondary, label: 'Viewer' },
-}
-
 function AlertIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.rust} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
 }
@@ -57,22 +51,6 @@ function StatusPill({ status }: { status: string }) {
       <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: cfg.dot, display: 'inline-block' }} />
       {cfg.label}
     </span>
-  )
-}
-
-function CompactStatCard({ label, value, sub, color, loading }: { label: string; value: string | number; sub?: string; color: string; loading?: boolean }) {
-  return (
-    <div style={{
-      backgroundColor: T.white, borderRadius: 16, padding: '16px 20px',
-      border: `1px solid ${T.mutedCream}60`,
-      display: 'flex', flexDirection: 'column', gap: 4, position: 'relative', overflow: 'hidden'
-    }}>
-      <span style={{ fontSize: 11, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-        {label}
-      </span>
-      <span style={{ fontSize: 22, fontWeight: 700, color: T.inkPrimary }}>{loading ? '—' : value}</span>
-      {sub && <span style={{ fontSize: 11, color: T.inkSecondary }}>{sub}</span>}
-    </div>
   )
 }
 
@@ -98,18 +76,12 @@ export function Dashboard() {
   const [activePage] = useState('dashboard')
 
   const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
-  const [onlineUsers, setOnlineUsers] = useState(1)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
 
   useEffect(() => {
     if (!user) navigate('/login', { replace: true })
   }, [user, navigate])
-
-  useEffect(() => {
-    const t = setInterval(() => setOnlineUsers(Math.floor(Math.random() * 4) + 1), 7000)
-    return () => clearInterval(t)
-  }, [])
 
   const { data: summary, isLoading: summaryLoading } = useQuery<iDashboardSummary>({
     queryKey: ['dashboard-summary'],
@@ -125,7 +97,7 @@ export function Dashboard() {
     date_from: filters.dateFrom || undefined,
     date_to: filters.dateTo || undefined,
     page: filters.page,
-    limit: 10, // Optimised for Mediline double-column layout view
+    limit: 10,
   }
 
   const { data: ordersPage, isLoading: ordersLoading, isError } = useQuery<iPaginatedResult<iOrder>>({
@@ -142,9 +114,6 @@ export function Dashboard() {
 
   if (!user) return null
 
-  const roleStyle = ROLE_CFG[user.role] ?? { bg: T.panelBg, text: T.inkSecondary, label: user.role }
-  const initials = user.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-
   const reminderOrders = ordersPage?.items.filter(o => o.status === 'pending' || o.status === 'confirmed').slice(0, 3) ?? []
 
   return (
@@ -159,9 +128,7 @@ export function Dashboard() {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
-        <TopBar title={activePage} searchValue={''} onSearchChange={function (v: string): void {
-          throw new Error('Function not implemented.')
-        }} />
+        <TopBar title={activePage} searchValue={filters.search} onSearchChange={(v: string) => setFilter('search', v)} />
 
         <main style={{ padding: '32px', flex: 1, display: 'flex', flexDirection: 'column', gap: 28 }}>
 
@@ -178,14 +145,32 @@ export function Dashboard() {
                 <h2 style={{ margin: '4px 0', fontSize: 26, fontWeight: 800, color: T.inkPrimary }}>
                   {summaryLoading ? 'Calculating...' : fmtZAR(summary?.total_value_active_zar ?? 0)}
                 </h2>
-                <p style={{ margin: 0, fontSize: 12, color: T.inkSecondary }}>Pending, Confirmed, & Dispatched assets value currently inside the system pipelines.</p>
+                <p style={{ margin: 0, fontSize: 12, color: T.inkSecondary }}>Assets value currently inside the system pipelines.</p>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-              <CompactStatCard label="Orders Today" value={summary?.total_today ?? 0} color={T.orange} loading={summaryLoading} />
-              <CompactStatCard label="Awaiting Action" value={summary?.by_status?.pending ?? 0} sub="Pending status" color={T.warning} loading={summaryLoading} />
-              <CompactStatCard label="In Transit Pipeline" value={(summary?.by_status?.dispatched ?? 0) + (summary?.by_status?.confirmed ?? 0)} sub="Confirmed & Dispatched" color={T.deepTeal} loading={summaryLoading} />
+            <div style={{
+              backgroundColor: T.white, borderRadius: 24, border: `1px solid ${T.mutedCream}60`,
+              display: 'flex', overflow: 'hidden',
+            }}>
+              {[
+                { label: 'Orders Today', value: summary?.total_today ?? 0 },
+                { label: 'Awaiting Action', value: summary?.by_status?.pending ?? 0, sub: 'Pending status' },
+                { label: 'In Transit Pipeline', value: (summary?.by_status?.dispatched ?? 0) + (summary?.by_status?.confirmed ?? 0), sub: 'Confirmed & Dispatched' },
+              ].map((stat, idx, arr) => (
+                <div
+                  key={stat.label}
+                  style={{
+                    flex: 1, padding: '16px 20px',
+                    borderRight: idx < arr.length - 1 ? `1px solid ${T.mutedCream}` : 'none',
+                    display: 'flex', flexDirection: 'column', gap: 4,
+                  }}
+                >
+                  <span style={{ fontSize: 11, color: T.inkGhost, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{stat.label}</span>
+                  <span style={{ fontSize: 22, fontWeight: 700, color: T.inkPrimary }}>{summaryLoading ? '—' : stat.value}</span>
+                  {stat.sub && <span style={{ fontSize: 11, color: T.inkSecondary }}>{stat.sub}</span>}
+                </div>
+              ))}
             </div>
           </div>
 

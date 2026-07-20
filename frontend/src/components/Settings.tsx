@@ -150,6 +150,18 @@ export function Settings({ onClose }: iSettingsProps) {
           </span>
           <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              <span style={{ color: T.inkSecondary }}>Business Name:</span>
+              <span style={{ fontWeight: 700, color: T.inkPrimary, fontSize: 11 }}>
+                {user.business_name || 'N/A'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              <span style={{ color: T.inkSecondary }}>Business Context ID:</span>
+              <span style={{ fontFamily: "ui-monospace, 'Cascadia Code', monospace", fontSize: 11, fontWeight: 600, color: T.inkPrimary }}>
+                {user.business_id ? `${user.business_id.substring(0, 8)}...` : 'N/A'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
               <span style={{ color: T.inkSecondary }}>Assigned Profile Role:</span>
               <span
                 style={{

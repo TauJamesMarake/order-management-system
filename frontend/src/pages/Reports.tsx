@@ -70,6 +70,7 @@ export function Reports() {
   const [activePage] = useState('reports')
   const [isExporting, setIsExporting] = useState<string | null>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [searchValue, setSearchValue] = useState('')
 
   useEffect(() => {
     if (!user) navigate('/login', { replace: true })
@@ -85,10 +86,12 @@ export function Reports() {
 
   // by_mineral -> sorted array for charts/table
   const mineralEntries = useMemo(() => {
+    const term = searchValue.trim().toLowerCase()
     return Object.entries(summary?.by_mineral ?? {})
       .map(([mineral, stats]) => ({ mineral, count: stats.count, value: stats.value }))
+      .filter((entry) => !term || entry.mineral.toLowerCase().includes(term))
       .sort((a, b) => b.value - a.value)
-  }, [summary?.by_mineral])
+  }, [summary?.by_mineral, searchValue])
 
   const pieColors = useMemo(() => {
     const palette = [T.teal, T.orange, T.deepTeal, T.success, T.rust, T.inkSecondary]
@@ -153,7 +156,7 @@ export function Reports() {
       <SideBar activePage={activePage} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <TopBar title="reports" searchValue="" onSearchChange={() => { }} />
+        <TopBar title="reports" searchValue={searchValue} onSearchChange={setSearchValue} />
 
         <main style={{ padding: '32px', flex: 1, display: 'grid', gridTemplateColumns: '1fr', gap: 32, alignItems: 'start' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -258,7 +261,9 @@ export function Reports() {
 
                   {mineralEntries.length === 0 ? (
                     <div style={{ padding: '40px 0', textAlign: 'center', color: T.inkGhost, fontSize: 13, fontWeight: 500 }}>
-                      No order data available for the current period.
+                      {searchValue.trim()
+                        ? `No minerals matching "${searchValue}" found in this period.`
+                        : 'No order data available for the current period.'}
                     </div>
                   ) : (
                     <>

@@ -50,13 +50,32 @@ function SettingsIcon({ color }: { color: string }) {
     )
 }
 
-type NavId = 'dashboard' | 'orders' | 'reports' | 'users'
+export function BellIcon({ color }: { color: string }) {
+    return (
+        <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+    )
+}
+
+type NavId = 'dashboard' | 'orders' | 'reports' | 'users' | 'notifications'
 
 const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: string }> }> = [
     { id: 'dashboard', label: 'Dashboard', icon: DashIcon },
     { id: 'orders', label: 'Orders', icon: OrderIcon },
     { id: 'reports', label: 'Reports', icon: ReportIcon },
     { id: 'users', label: 'Users', icon: UserIcon },
+    { id: 'notifications', label: 'Notifications', icon: BellIcon },
 ]
 
 export function SideBar({ activePage }: { activePage: string }) {

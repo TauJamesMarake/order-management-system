@@ -309,7 +309,7 @@ export function OrdersPage() {
                     display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10,
                     border: 'none', backgroundColor: T.teal, color: T.white,
                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    marginBottom: 4, whiteSpace: 'nowrap',
+                    marginBottom: 8, whiteSpace: 'nowrap',
                   }}
                 >
                   <PlusIcon color={T.white} />
@@ -520,7 +520,6 @@ export function OrdersPage() {
                         borderRadius: 14,
                         backgroundColor: T.panelBg,
                         boxShadow: `0 2px 2px ${T.orange}`,
-
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 4

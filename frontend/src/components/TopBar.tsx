@@ -1,9 +1,7 @@
 import { useAuthStore } from '@/stores/auth.store'
-// import type { OrderStatus } from '@/types'
 import { useMemo } from 'react'
 import { T } from '@/components/ColorPalette'
-// import type { iDashboardSummary } from '@/types'
-// import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 type RoleCfg = { bg: string; text: string; label: string }
 const ROLE_CFG: Record<string, RoleCfg> = {
@@ -77,6 +75,7 @@ export function TopBar({
   onSearchChange: (v: string) => void
 }) {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
 
   const roleStyle = useMemo(() => {
     if (!user) return ROLE_CFG.viewer
@@ -87,7 +86,7 @@ export function TopBar({
     if (!user?.full_name) return '??'
     return user.full_name
       .split(' ')
-      .map((n) => n[0])
+      .map((n: string) => n[0])
       .join('')
       .slice(0, 2)
       .toUpperCase()
@@ -107,7 +106,6 @@ export function TopBar({
         position: 'sticky',
         top: 0,
         zIndex: 40,
-        // boxShadow: '0 4px 14px rgba(14, 31, 31, 0.23)',
         // borderBottom: `1px solid ${T.charcoal}60`,
         borderLeft: `1px solid ${T.charcoal}100`,
       }}
@@ -193,8 +191,12 @@ export function TopBar({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-        <div style={{ position: 'relative', cursor: 'pointer', padding: 4 }}>
-          <BellIcon color={T.inkSecondary} />
+        <div
+          onClick={() => navigate('/notifications')}
+          title="Notifications"
+          style={{ position: 'relative', cursor: 'pointer', padding: 4 }}
+        >
+          <BellIcon color={title.toLowerCase() === 'notifications' ? T.deepTeal : T.inkSecondary} />
           <span
             style={{
               position: 'absolute',
@@ -240,7 +242,6 @@ export function TopBar({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(18,116,117,0.15)',
             }}
           >
             <span style={{ color: T.white, fontSize: 14, fontWeight: 700 }}>{initials}</span>
@@ -250,4 +251,3 @@ export function TopBar({
     </header>
   )
 }
-

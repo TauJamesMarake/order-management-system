@@ -1,5 +1,3 @@
-import { Request } from 'express'
-
 export type UserRole = 'admin' | 'clerk' | 'viewer'
 
 export interface iUser {
@@ -10,6 +8,26 @@ export interface iUser {
   role: UserRole
   is_active: boolean
   created_at: string
+}
+
+export interface iAuthUser {
+  id: string
+  email: string
+  full_name: string
+  role: UserRole
+  business_id: string
+  business_name: string
+}
+ 
+export interface iLoginCredentials {
+  email: string
+  password: string
+}
+ 
+export interface iLoginResult {
+  token: string
+  refresh_token: string
+  user: iAuthUser
 }
 
 export interface iPlatformAdmin {
@@ -161,3 +179,6 @@ export interface iPlatformAuthenticatedRequest extends Request {
     email: string
   }
 }
+
+export type Nullable<T> = T | null
+export type PartialNullable<T> = { [K in keyof T]?: T[K] | null }

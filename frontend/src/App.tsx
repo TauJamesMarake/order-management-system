@@ -4,6 +4,7 @@ import { Dashboard } from '@/pages/Dashboard'
 import { OrdersPage } from '@/pages/Orders'
 import { Reports } from '@/pages/Reports'
 import { Users } from '@/pages/Users'
+import { Notifications } from '@/pages/Notifications'
 import { useAuthStore } from '@/stores/auth.store'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -50,6 +51,15 @@ export default function App() {
             <Users />
           </ProtectedRoute>}
       />
+
+       <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>}
+      />
+
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )

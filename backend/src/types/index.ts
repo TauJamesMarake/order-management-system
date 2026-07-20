@@ -145,8 +145,6 @@ export interface iAuthenticatedRequest extends Request {
   }
 }
 
-// PlatformAuthenticatedRequest
-// Use in platform admin controllers where req.platformAdmin is guaranteed.
 export interface iPlatformAuthenticatedRequest extends Request {
   platformAdmin: {
     id: string
