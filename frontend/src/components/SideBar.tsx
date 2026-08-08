@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { T } from '@/components/ColorPalette'
 import { Settings } from '@/components/Settings'
+import { useAuthStore } from '@/stores/auth.store'
 
 function DashIcon({ color }: { color: string }) {
     return (
@@ -41,6 +42,16 @@ function UserIcon({ color }: { color: string }) {
         </svg>
     )
 }
+function CustomerIcon({ color }: { color: string }) {
+    return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+    )
+}
 function SettingsIcon({ color }: { color: string }) {
     return (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -68,19 +79,42 @@ export function BellIcon({ color }: { color: string }) {
     )
 }
 
-type NavId = 'dashboard' | 'orders' | 'reports' | 'users' | 'notifications'
+type NavId = 'dashboard' | 'orders' | 'reports' | 'customers' | 'users' | 'notifications' | 'settings'
 
 const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: string }> }> = [
     { id: 'dashboard', label: 'Dashboard', icon: DashIcon },
     { id: 'orders', label: 'Orders', icon: OrderIcon },
+    { id: 'customers', label: 'Customers', icon: CustomerIcon },
     { id: 'reports', label: 'Reports', icon: ReportIcon },
-    { id: 'users', label: 'Users', icon: UserIcon },
     { id: 'notifications', label: 'Notifications', icon: BellIcon },
+    { id: 'users', label: 'Users', icon: UserIcon },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon },
 ]
 
 export function SideBar({ activePage }: { activePage: string }) {
     const navigate = useNavigate()
+    const { user } = useAuthStore()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+    const roleStyle = useMemo(() => {
+        const cfg: Record<string, { bg: string; text: string; label: string }> = {
+            admin: { bg: '#FEF0E8', text: T.rust, label: 'Administrator' },
+            clerk: { bg: '#E0F0F0', text: T.deepTeal, label: 'Clerk' },
+            viewer: { bg: T.panelBg, text: T.inkSecondary, label: 'Viewer' },
+        }
+        if (!user) return cfg.viewer
+        return cfg[user.role] ?? cfg.viewer
+    }, [user])
+
+    const initials = useMemo(() => {
+        if (!user?.full_name) return '??'
+        return user.full_name
+            .split(' ')
+            .map((n: string) => n[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase()
+    }, [user?.full_name])
 
     return (
         <aside
@@ -124,11 +158,11 @@ export function SideBar({ activePage }: { activePage: string }) {
 
                 <nav style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
-                        const active = activePage === id
+                        const active = activePage === id || (id === 'settings' && isSettingsOpen)
                         return (
                             <button
                                 key={id}
-                                onClick={() => navigate(`/${id}`)}
+                                onClick={() => (id === 'settings' ? setIsSettingsOpen(true) : navigate(`/${id}`))}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -151,33 +185,54 @@ export function SideBar({ activePage }: { activePage: string }) {
                 </nav>
             </div>
 
-            <div style={{ padding: '20px 16px', borderTop: `1px solid ${T.charcoal}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <button
-                    onClick={() => setIsSettingsOpen(true)}
+            <div style={{ padding: '16px', borderTop: `1px solid ${T.charcoal}`, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 14,
-                        padding: '12px 18px',
+                        gap: 12,
+                        padding: '12px 14px',
                         borderRadius: 16,
-                        backgroundColor: isSettingsOpen ? T.deepTeal : T.charcoal,
-                        border: 'none',
+                        backgroundColor: T.panelBg,
+                        border: `1px solid ${T.mutedCream}`,
                         width: '100%',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        color: isSettingsOpen ? T.white : T.inkGhost,
-                        transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = T.teal)}
-                    onMouseLeave={(e) => {
-                        if (!isSettingsOpen) e.currentTarget.style.color = T.inkGhost
                     }}
                 >
-                    <SettingsIcon color={isSettingsOpen ? T.white : 'currentColor'} /> {/* Highlight icon when open */}
-                    <span style={{ fontSize: 14, fontWeight: 500 }}>Settings</span>
-                </button>
+                    <div
+                        style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 12,
+                            background: `linear-gradient(135deg, ${T.deepTeal}, ${T.charcoal})`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                        }}
+                    >
+                        <span style={{ color: T.white, fontSize: 13, fontWeight: 700 }}>{initials}</span>
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: T.inkPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {user?.full_name ?? 'System User'}
+                        </p>
+                        <span
+                            style={{
+                                display: 'inline-block',
+                                padding: '0 8px',
+                                borderRadius: 4,
+                                marginTop: 4,
+                                backgroundColor: T.white,
+                                color: roleStyle.text,
+                                fontSize: 10,
+                                fontWeight: 700,
+                            }}
+                        >
+                            {roleStyle.label}
+                        </span>
+                    </div>
+                </div>
                 {isSettingsOpen && <Settings onClose={() => setIsSettingsOpen(false)} />}
-
             </div>
         </aside>
     )

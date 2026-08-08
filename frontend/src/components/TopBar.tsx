@@ -1,14 +1,6 @@
 import { useAuthStore } from '@/stores/auth.store'
-import { useMemo } from 'react'
 import { T } from '@/components/ColorPalette'
 import { useNavigate } from 'react-router-dom'
-
-type RoleCfg = { bg: string; text: string; label: string }
-const ROLE_CFG: Record<string, RoleCfg> = {
-  admin: { bg: '#FEF0E8', text: T.rust, label: 'Administrator' },
-  clerk: { bg: '#E0F0F0', text: T.deepTeal, label: 'Clerk' },
-  viewer: { bg: T.panelBg, text: T.inkSecondary, label: 'Viewer' },
-}
 
 export function SearchIcon({ color }: { color: string }) {
   return (
@@ -77,22 +69,40 @@ export function TopBar({
   const { user } = useAuthStore()
   const navigate = useNavigate()
 
-  const roleStyle = useMemo(() => {
-    if (!user) return ROLE_CFG.viewer
-    return ROLE_CFG[user.role] ?? ROLE_CFG.viewer
-  }, [user])
-
-  const initials = useMemo(() => {
-    if (!user?.full_name) return '??'
-    return user.full_name
-      .split(' ')
-      .map((n: string) => n[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase()
-  }, [user?.full_name])
-
   if (!user) return null
+
+  let heading = ''
+  let subtitle = ''
+
+  switch (title.toLowerCase()) {
+    case 'dashboard':
+      heading = 'Dashboard'
+      subtitle = `Welcome back, ${user.full_name}.`
+      break
+    case 'orders':
+      heading = 'Orders'
+      subtitle = 'Operational control panel'
+      break
+    case 'reports':
+      heading = 'Reports'
+      subtitle = 'Analytics, performance metrics & ledger insights'
+      break
+    case 'users':
+      heading = 'Users'
+      subtitle = 'Access control, team members & role management'
+      break
+    case 'customers':
+      heading = 'Customers'
+      subtitle = 'Viewer accounts & associated orders'
+      break
+    case 'notifications':
+      heading = 'Notifications'
+      subtitle = 'Alerts, reminders & activity feed'
+      break
+    default:
+      heading = title
+      break
+  }
 
   return (
     <header
@@ -100,66 +110,28 @@ export function TopBar({
         height: 85,
         backgroundColor: T.white,
         padding: '0 32px',
-        display: 'flex',
-        justifyContent: 'space-between',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
+        gap: 24,
         position: 'sticky',
         top: 0,
         zIndex: 40,
-        borderBottom: `1px solid ${T.charcoal}`,
         borderLeft: `1px solid ${T.charcoal}100`,
       }}
     >
       <div>
-        {title.toLowerCase() === 'dashboard' ? (
-          <div>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
-              Dashboard
-            </h1>
-            <p style={{ margin: 0, fontSize: 12, color: T.inkGhost, fontWeight: 500 }}>
-              {new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-            </p>
-          </div>
-        ) : title.toLowerCase() === 'orders' ? (
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
-              Orders
-            </h1>
-            <p style={{ margin: 0, fontSize: 12, color: T.inkGhost, fontWeight: 500 }}>
-              Operational control panel
-            </p>
-          </div>
-        ) : title.toLowerCase() === 'reports' ? (
-              <div>
-                <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
-                  Reports
-                </h1>
-                <p style={{ margin: 0, fontSize: 12, color: T.inkGhost, fontWeight: 500 }}>
-                  {new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                </p>
-              </div>
-            )
-              : title.toLowerCase() === 'notifications' ? (
-                <div>
-                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
-                    Notifications
-                  </h1>
-                  <p style={{ margin: 0, fontSize: 12, color: T.inkGhost, fontWeight: 500 }}>
-                    Alerts, reminders & activity feed
-                  </p>
-                </div>
-              )
-              : (
-                <div>
-                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
-                    {title}
-                  </h1>
-                </div>
-              )
-        }
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.inkPrimary, textTransform: 'capitalize' }}>
+          {heading}
+        </h1>
+        {subtitle && (
+          <p style={{ margin: 0, fontSize: 12, color: T.inkGhost, fontWeight: 500 }}>
+            {subtitle}
+          </p>
+        )}
       </div>
 
-      <div style={{ position: 'relative', width: '38%', maxWidth: 460 }}>
+      <div style={{ position: 'relative', width: 380, maxWidth: 380 }}>
         <span
           style={{
             position: 'absolute',
@@ -189,64 +161,38 @@ export function TopBar({
         />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-        <div
-          onClick={() => navigate('/notifications')}
-          title="Notifications"
-          style={{ position: 'relative', cursor: 'pointer', padding: 4 }}
-        >
-          <BellIcon color={title.toLowerCase() === 'notifications' ? T.deepTeal : T.inkSecondary} />
-          <span
-            style={{
-              position: 'absolute',
-              top: 3,
-              right: 3,
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: T.orange,
-            }}
-          />
-        </div>
-
-        <div style={{ width: 1, height: 24, backgroundColor: T.mutedCream }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.inkPrimary, lineHeight: 1.2 }}>
-              {user.full_name}
-            </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 24 }}>
+        {(user?.role === 'admin' || user?.role === 'clerk') && (
+          <div
+            onClick={() => navigate('/notifications')}
+            title="Notifications"
+            style={{ position: 'relative', cursor: 'pointer', padding: 4 }}
+          >
+            <BellIcon color={title.toLowerCase() === 'notifications' ? T.deepTeal : T.inkSecondary} />
             <span
               style={{
-                display: 'inline-block',
-                padding: '1px 6px',
-                borderRadius: 4,
-                marginTop: 2,
-                backgroundColor: roleStyle.bg,
-                color: roleStyle.text,
-                fontSize: 10,
-                fontWeight: 700,
+                position: 'absolute',
+                top: 3,
+                right: 3,
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: T.orange,
               }}
-            >
-              {roleStyle.label}
-            </span>
+            />
           </div>
+        )}
 
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              background: `linear-gradient(135deg, ${T.deepTeal}, ${T.charcoal})`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span style={{ color: T.white, fontSize: 14, fontWeight: 700 }}>{initials}</span>
-          </div>
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: T.inkPrimary, lineHeight: 1.2 }}>
+            {new Date().toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+          <p style={{ margin: 0, fontSize: 11, color: T.inkGhost, fontWeight: 500 }}>
+            {new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+          </p>
         </div>
       </div>
     </header>
   )
 }
+

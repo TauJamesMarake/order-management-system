@@ -53,6 +53,15 @@ function TrashIcon({ color }: { color: string }) {
 function CloseIcon({ color }: { color: string }) {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
 }
+function LockIcon() {
+  return <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={T.rust} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+}
+
+// Notifications are operational (order pipeline) alerts — relevant to admins
+// and clerks who action orders, not to read-only viewers.
+function canViewNotifications(role: string | undefined): boolean {
+  return role === 'admin' || role === 'clerk'
+}
 
 type NotificationTone = 'action' | 'alert' | 'info' | 'reminder'
 
@@ -157,25 +166,25 @@ export function Notifications() {
   const { data: pendingPage, isLoading: pendingLoading } = useQuery<iPaginatedResult<iOrder>>({
     queryKey: ['notifications-pending'],
     queryFn: () => get<iPaginatedResult<iOrder>>('/orders', { params: { status: 'pending', limit: 20, page: 1 } }),
-    enabled: !!user,
+    enabled: !!user && canViewNotifications(user.role),
   })
 
   const { data: confirmedPage, isLoading: confirmedLoading } = useQuery<iPaginatedResult<iOrder>>({
     queryKey: ['notifications-confirmed'],
     queryFn: () => get<iPaginatedResult<iOrder>>('/orders', { params: { status: 'confirmed', limit: 20, page: 1 } }),
-    enabled: !!user,
+    enabled: !!user && canViewNotifications(user.role),
   })
 
   const { data: cancelledPage, isLoading: cancelledLoading } = useQuery<iPaginatedResult<iOrder>>({
     queryKey: ['notifications-cancelled'],
     queryFn: () => get<iPaginatedResult<iOrder>>('/orders', { params: { status: 'cancelled', limit: 10, page: 1 } }),
-    enabled: !!user,
+    enabled: !!user && canViewNotifications(user.role),
   })
 
   const { data: deliveredPage, isLoading: deliveredLoading } = useQuery<iPaginatedResult<iOrder>>({
     queryKey: ['notifications-delivered'],
     queryFn: () => get<iPaginatedResult<iOrder>>('/orders', { params: { status: 'delivered', limit: 10, page: 1 } }),
-    enabled: !!user,
+    enabled: !!user && canViewNotifications(user.role),
   })
 
   const isLoading = pendingLoading || confirmedLoading || cancelledLoading || deliveredLoading
@@ -302,6 +311,31 @@ export function Notifications() {
   }), [items])
 
   if (!user) return null
+
+  if (!canViewNotifications(user.role)) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <SideBar activePage={activePage} />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <TopBar title="Access Denied" searchValue="" onSearchChange={() => { }} />
+          <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+            <div style={{
+              backgroundColor: T.white, borderRadius: 20, padding: 48, textAlign: 'center', maxWidth: 480,
+              border: `1px solid ${T.mutedCream}`,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: 64, height: 64, margin: '0 auto' }}>
+                <LockIcon />
+              </div>
+              <h2 style={{ margin: '16px 0 8px', color: T.rust, fontSize: 20, fontWeight: 700 }}>Restricted to Operations Staff</h2>
+              <p style={{ margin: 0, color: T.inkSecondary, fontSize: 14, lineHeight: 1.5 }}>
+                Notifications cover order-pipeline activity actioned by admins and clerks. Your profile scope ({user.role}) doesn't include this feed.
+              </p>
+            </div>
+          </main>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>

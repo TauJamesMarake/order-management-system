@@ -74,7 +74,6 @@ export async function createUser(req: Request, res: Response): Promise<void> {
             return
         }
 
-        /* Type is now inferred from schema, no separate interface needed */
         const dto: CreateUserPayload = parsed.data
 
         const user = await UsersService.createUser(dto, req.user!.business_id)

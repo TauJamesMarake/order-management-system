@@ -364,7 +364,14 @@ export function Users() {
                             <td style={{ padding: '16px 20px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                 <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: T.mutedCream, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <span style={{ fontSize: 10, fontWeight: 700, color: T.inkSecondary }}>{u.full_name.slice(0, 2).toUpperCase()}</span>
+                                  <span style={{ fontSize: 10, fontWeight: 700, color: T.inkSecondary }}>
+                                    {u.full_name
+                                      .split(' ')
+                                      .map((n: string) => n[0])
+                                      .join('')
+                                      .slice(0, 2)
+                                      .toUpperCase()}
+                                  </span>
                                 </div>
                                 <span style={{ fontSize: 13, fontWeight: 600, color: T.inkPrimary }}>{u.full_name}</span>
                                 {isSelf && (

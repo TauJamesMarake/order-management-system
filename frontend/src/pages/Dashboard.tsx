@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import { get } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth.store'
 import { SideBar } from '@/components/SideBar'
-import { Settings } from '@/components/Settings'
 import { T } from '@/components/ColorPalette'
 import type { iOrder, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus } from '@/types'
 import { TopBar } from '@/components/TopBar'
@@ -75,8 +74,7 @@ export function Dashboard() {
   const { user } = useAuthStore()
   const [activePage] = useState('dashboard')
 
-  const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
 
 
   useEffect(() => {
@@ -119,11 +117,7 @@ export function Dashboard() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
-      <SideBar activePage={activePage} />
-
-      {isSettingsOpen && (
-        <Settings onClose={() => setIsSettingsOpen(false)} />
-      )}
+<SideBar activePage={activePage} />
 
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>

@@ -3,6 +3,7 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { Dashboard } from '@/pages/Dashboard'
 import { OrdersPage } from '@/pages/Orders'
 import { Reports } from '@/pages/Reports'
+import { Customers } from '@/pages/Customers'
 import { Users } from '@/pages/Users'
 import { Notifications } from '@/pages/Notifications'
 import { useAuthStore } from '@/stores/auth.store'
@@ -40,6 +41,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Reports />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/customers"
+        element={
+          <ProtectedRoute>
+            <Customers />
           </ProtectedRoute>
         }
       />

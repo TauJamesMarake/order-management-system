@@ -7,7 +7,6 @@ import { useAuthStore } from '@/stores/auth.store'
 import type { iOrder, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus, iCreateOrderDTO, iUpdateOrderDTO } from '@/types'
 import { TopBar } from '@/components/TopBar'
 import { SideBar } from '@/components/SideBar'
-import { Settings } from '@/components/Settings'
 
 import { T } from '@/components/ColorPalette'
 
@@ -100,7 +99,6 @@ function canManageOrders(role: string | undefined): boolean {
 }
 
 // Ownership check — the list view (v_orders_with_creator) exposes the creator as `creator_id`,
-// while the single-order fetch shape uses `created_by`. Check both defensively.
 function isOrderOwner(order: iOrder, userId: string | undefined): boolean {
   if (!userId) return false
   const ownerId = (order as unknown as { creator_id?: string }).creator_id ?? order.created_by
@@ -113,8 +111,7 @@ export function OrdersPage() {
   const queryClient = useQueryClient()
   const activePage = 'orders'
   const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
   const [modal, setModal] = useState<OrderModalMode>(null)
   const [orderForm, setOrderForm] = useState<iOrderFormState>(ORDER_FORM_DEFAULTS)
@@ -251,10 +248,7 @@ export function OrdersPage() {
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
 
-      <SideBar activePage={activePage} />
-      {isSettingsOpen && (
-        <Settings onClose={() => setIsSettingsOpen(false)} />
-      )}
+<SideBar activePage={activePage} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
@@ -309,7 +303,7 @@ export function OrdersPage() {
                     display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10,
                     border: 'none', backgroundColor: T.teal, color: T.white,
                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    marginBottom: 8, whiteSpace: 'nowrap',
+                    marginBottom: 12, whiteSpace: 'nowrap',
                   }}
                 >
                   <PlusIcon color={T.white} />
@@ -364,8 +358,10 @@ export function OrdersPage() {
             </div>
 
             <div style={{
-              backgroundColor: T.white, borderRadius: 20,
-              border: `1px solid ${T.mutedCream}60`, overflow: 'hidden'
+              backgroundColor: T.white,
+              borderRadius: 20,
+              border: `1px solid ${T.mutedCream}60`,
+              overflow: 'hidden'
             }}>
 
               {isError && (
@@ -380,8 +376,13 @@ export function OrdersPage() {
                   <div style={{ padding: '80px 0', textAlign: 'center', color: T.inkGhost, fontSize: 14, fontWeight: 500 }}>Loading distributed ledger pipeline matrix...</div>
                 ) : !ordersPage || ordersPage.items.length === 0 ? (
                   <div style={{ padding: '80px 0', textAlign: 'center' }}>
-                    <p style={{ margin: '0 0 10px', fontSize: 14, color: T.inkGhost, fontWeight: 500 }}>No register logs discovered fitting parameters.</p>
-                    <button onClick={() => setFilters(FILTER_DEFAULTS)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: T.teal, fontWeight: 600, textDecoration: 'underline' }}>Clear Constraints</button>
+                    <p style={{ margin: '0 0 10px', fontSize: 14, color: T.inkGhost, fontWeight: 500 }}>
+                      No register logs discovered fitting parameters.
+                      </p>
+                    <button onClick={() => setFilters(FILTER_DEFAULTS)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: T.teal, fontWeight: 600, textDecoration: 'underline' }}>
+                      Clear Constraints
+                    </button>
                   </div>
                 ) : (
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -589,7 +590,7 @@ export function OrdersPage() {
             </label>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSecondary }}>Mineral Type</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSecondary }}>Product Type</span>
               <input
                 required
                 minLength={2}

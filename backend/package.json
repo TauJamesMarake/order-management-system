@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "lint": "eslint src/**/*.ts",
     "provision": "tsx scripts/provision.ts",
     "provision:admin": "tsx scripts/provision_admin.ts",

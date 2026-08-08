@@ -22,7 +22,7 @@ export const http: AxiosInstance = axios.create({
 // Request interceptor — inject Bearer token
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const token = sessionStorage.getItem(TOKEN_KEY)
     if (token) {
       config.headers.set('Authorization', `Bearer ${token}`)
     }
@@ -47,7 +47,7 @@ http.interceptors.response.use(
     const isLoginRequest = typeof requestUrl === 'string' && requestUrl.includes('/auth/login')
 
     if (status === 401) {
-      localStorage.removeItem(TOKEN_KEY)
+      sessionStorage.removeItem(TOKEN_KEY)
 
       if (!isLoginRequest) {
         window.location.href = '/login'

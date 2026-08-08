@@ -135,7 +135,7 @@ function UnderlineInput({
 function BrandPanel() {
   return (
     <div style={{
-      width: '60%',
+      width: '55%',
       flexShrink: 0,
       backgroundColor: T.teal,
       display: 'flex',

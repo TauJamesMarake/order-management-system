@@ -99,7 +99,9 @@ export async function updateUser(
     full_name?: string
     role?: UserRole
     is_active?: boolean
-  }, businessId: string
+  },
+  businessId: string
+  
 ): Promise<iUser> {
   const payload: Partial<typeof dto> = {}
   if (dto.full_name !== undefined) payload.full_name = dto.full_name.trim()

@@ -8,11 +8,11 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error(
-    'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment variables.'
+    'Missing environment variables.'
   )
 }
 
-// Service role client,  bypasses Row Level Security.
+// Service role client, bypasses Row Level Security.
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,

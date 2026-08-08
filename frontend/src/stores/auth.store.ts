@@ -28,18 +28,20 @@ export const useAuthStore = create<iAuthState>()(
       isAuthenticated: false,
 
       setAuth: (user, token) => {
-        // Keep localStorage in sync for the Axios interceptor
-        localStorage.setItem(TOKEN_KEY, token)
+        // Keep sessionStorage in sync for the Axios interceptor.
+        // sessionStorage (not localStorage) so the session ends when the
+        // tab/browser closes, rather than persisting indefinitely on disk.
+        sessionStorage.setItem(TOKEN_KEY, token)
         set({ user, token, isAuthenticated: true })
       },
 
       clearAuth: () => {
-        localStorage.removeItem(TOKEN_KEY)
+        sessionStorage.removeItem(TOKEN_KEY)
         set({ user: null, token: null, isAuthenticated: false })
       },
 
       logout: () => {
-        localStorage.removeItem(TOKEN_KEY)
+        sessionStorage.removeItem(TOKEN_KEY)
         set({ user: null, token: null, isAuthenticated: false })
       },
 
@@ -49,8 +51,8 @@ export const useAuthStore = create<iAuthState>()(
       },
     }),
     {
-      name: 'oms_auth',           // localStorage key for the persisted slice
-      storage: createJSONStorage(() => localStorage),
+      name: 'oms_auth',           // sessionStorage key for the persisted slice
+      storage: createJSONStorage(() => sessionStorage),
       // Only persist the user object and token, not derived state
       partialize: (state) => ({
         user: state.user,

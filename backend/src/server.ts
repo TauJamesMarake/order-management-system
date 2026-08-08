@@ -19,8 +19,3 @@ process.on('SIGTERM', () => {
     process.exit(0)
   })
 })
-
-process.on('SIGINT', () => {
-  console.log('\nSIGIN received, shutting down...')
-  server.close(() => process.exit(0))
-})
