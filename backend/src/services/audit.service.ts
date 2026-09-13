@@ -1,14 +1,6 @@
 import { supabase } from '../db/supabase'
 import { iOrder } from '../types'
 
-/**
- * Emits a structured error to the console.
- * Replace the body of this function with your error-tracking SDK call.
- *
- * @param context  - Name of the calling function (for log correlation).
- * @param message  - Human-readable description of what failed.
- * @param detail   - Any additional context (DB error message, ids, etc.).
- */
 function logAuditError(context: string, message: string, detail?: unknown): void {
   console.error(JSON.stringify({
     level: 'error',

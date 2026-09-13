@@ -44,22 +44,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'))
 }
-// const globalLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000,   /* 15 minutes */
-//   max: 200,
-//   standardHeaders: true,
-//   legacyHeaders: false,
-//   message: { success: false, error: 'Too many requests. Please try again later.' },
-// })
 
 // Rate limiting is disabled in the test environment to prevent the
 // in-process supertest suite from exhausting the 100 req/15 min window.
 if (process.env.NODE_ENV !== 'test') {
   const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max:      100,
+    max: 100,
     standardHeaders: true,
-    legacyHeaders:   false,
+    legacyHeaders: false,
     message: { success: false, error: 'Too many requests. Please try again later.' },
   })
   app.use(globalLimiter)
@@ -88,7 +81,7 @@ app.get('/health', (_req: Request, res: Response) => {
     success: true,
     data: {
       status: 'ok',
-      service: 'OMS API',
+      service: 'OMS MARE API',
       timestamp: new Date().toISOString(),
     },
   })

@@ -6,7 +6,6 @@ import axios, {
 } from 'axios'
 import { type iApiSuccess } from '@/types'
 
-// Token key must stay in sync with auth.store.ts
 const TOKEN_KEY = 'oms_access_token'
 
 // Create the shared instance
@@ -19,7 +18,7 @@ export const http: AxiosInstance = axios.create({
   },
 })
 
-// Request interceptor — inject Bearer token
+// Requesting interceptor
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = sessionStorage.getItem(TOKEN_KEY)
@@ -31,18 +30,17 @@ http.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor — unwrap + handle 401
+// Response interceptor: unwrap + handle 401
 http.interceptors.response.use(
-  // On success: the backend always wraps in { success, data }.
-  // We unwrap so every service function receives T directly.
   (response: AxiosResponse<iApiSuccess<unknown>>) => {
+    if (response.config.responseType === 'blob') {
+      return response as never
+    }
     return response.data.data as never
   },
   (error) => {
     const status = error.response?.status
 
-    // Avoid hard navigation/reload for login failures.
-    // Wrong credentials should be handled by the LoginPage form UI.
     const requestUrl = error.config?.url
     const isLoginRequest = typeof requestUrl === 'string' && requestUrl.includes('/auth/login')
 
@@ -54,7 +52,20 @@ http.interceptors.response.use(
       }
     }
 
-    // Re-shape the error so catch handlers get a plain message
+    const errorBlob = error.response?.data
+    if (errorBlob instanceof Blob && errorBlob.type.includes('json')) {
+      return errorBlob.text().then((text: string) => {
+        let message = error.message ?? 'An unexpected error occurred.'
+        try {
+          const parsed = JSON.parse(text)
+          message = parsed.error ?? message
+        } catch {
+          // fall back to the generic catch message.
+        }
+        return Promise.reject(new Error(message))
+      })
+    }
+
     const message: string =
       error.response?.data?.error ?? error.message ?? 'An unexpected error occurred.'
     return Promise.reject(new Error(message))
@@ -93,4 +104,35 @@ export async function del<T>(
   config?: AxiosRequestConfig
 ): Promise<T> {
   return http.delete<T, T>(url, config)
+}
+
+// File downloads (exports, reports)
+export async function downloadFile(
+  url: string,
+  fallbackFilename: string,
+  config?: AxiosRequestConfig
+): Promise<{ blob: Blob; filename: string }> {
+  const response = await http.get<Blob, AxiosResponse<Blob>>(url, {
+    ...config,
+    responseType: 'blob',
+  })
+
+  const disposition = response.headers['content-disposition'] as string | undefined
+  const match = disposition?.match(/filename="?([^"]+)"?/)
+
+  return {
+    blob: response.data,
+    filename: match?.[1] ?? fallbackFilename,
+  }
+}
+
+export function triggerBlobDownload(blob: Blob, filename: string): void {
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
 }

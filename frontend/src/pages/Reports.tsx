@@ -15,7 +15,7 @@ import {
   Legend,
 } from 'recharts'
 
-import { get } from '@/lib/http'
+import { get, downloadFile, triggerBlobDownload } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth.store'
 import type { iOrderSummary, OrderStatus } from '@/types'
 import { TopBar } from '@/components/TopBar'
@@ -69,6 +69,7 @@ export function Reports() {
   const { user } = useAuthStore()
   const [activePage] = useState('reports')
   const [isExporting, setIsExporting] = useState<string | null>(null)
+  const [exportError, setExportError] = useState<string | null>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
 
@@ -140,11 +141,17 @@ export function Reports() {
   }
 
   const handleExport = async (format: 'excel' | 'pdf') => {
+    setExportError(null)
     try {
       setIsExporting(format)
-      window.open(`${import.meta.env.VITE_API_URL || ''}/api/reports/export/${format}`, '_blank')
-    } catch (error) {
-      console.error(`Export engine disruption reported over format stream compiler: ${format}`, error)
+      const extension = format === 'excel' ? 'xlsx' : 'pdf'
+      const { blob, filename } = await downloadFile(
+        `/reports/export/${format}`,
+        `orders_export_${new Date().toISOString().slice(0, 10)}.${extension}`
+      )
+      triggerBlobDownload(blob, filename)
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Export failed. Please try again.')
     } finally {
       setIsExporting(null)
     }
@@ -168,40 +175,49 @@ export function Reports() {
                 padding: '20px',
                 border: `1px solid ${T.mutedCream}60`,
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                flexDirection: 'column',
+                gap: 12,
               }}
             >
-              <div>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.inkPrimary }}>Data Extraction Streams</h3>
-                <p style={{ margin: '4px 0 0', fontSize: 12, color: T.inkGhost }}>Exports are compiled directly in-memory and securely bounded by tenant context fields.</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.inkPrimary }}>Data Extraction Streams</h3>
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: T.inkGhost }}>Exports are compiled directly in-memory and securely bounded by tenant context fields.</p>
+                </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button
+                    disabled={isLoading || isExporting !== null}
+                    onClick={() => handleExport('excel')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 8,
+                      border: `1px solid ${T.mutedCream}`, backgroundColor: T.white, color: T.deepTeal,
+                      fontSize: 13, fontWeight: 600, cursor: isLoading || isExporting !== null ? 'not-allowed' : 'pointer',
+                      opacity: isExporting === 'excel' ? 0.6 : 1, transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <DownloadIcon color="currentColor" />
+                    {isExporting === 'excel' ? 'Preparing...' : 'Excel'}
+                  </button>
+                  <button
+                    disabled={isLoading || isExporting !== null}
+                    onClick={() => handleExport('pdf')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 8,
+                      border: 'none', backgroundColor: T.teal, color: T.white,
+                      fontSize: 13, fontWeight: 600, cursor: isLoading || isExporting !== null ? 'not-allowed' : 'pointer',
+                      opacity: isExporting === 'pdf' ? 0.6 : 1, transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <DownloadIcon color="currentColor" />
+                    {isExporting === 'pdf' ? 'Preparing...' : 'PDF'}
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button
-                  disabled={isLoading || isExporting !== null}
-                  onClick={() => handleExport('excel')}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 8,
-                    border: `1px solid ${T.mutedCream}`, backgroundColor: T.white, color: T.deepTeal,
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease',
-                  }}
-                >
-                  <DownloadIcon color="currentColor" />
-                  Excel
-                </button>
-                <button
-                  disabled={isLoading || isExporting !== null}
-                  onClick={() => handleExport('pdf')}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 8,
-                    border: 'none', backgroundColor: T.teal, color: T.white,
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease',
-                  }}
-                >
-                  <DownloadIcon color="currentColor" />
-                  PDF
-                </button>
-              </div>
+              {exportError && (
+                <div style={{ padding: '10px 14px', borderRadius: 10, backgroundColor: `${T.rust}10`, color: T.rust, fontSize: 12, fontWeight: 600 }}>
+                  {exportError}
+                </div>
+              )}
             </div>
 
             {isLoading ? (

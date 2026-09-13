@@ -79,16 +79,17 @@ export function BellIcon({ color }: { color: string }) {
     )
 }
 
-type NavId = 'dashboard' | 'orders' | 'reports' | 'customers' | 'users' | 'notifications' | 'settings'
+type NavId = 'dashboard' | 'orders' | 'reports' | 'customers' | 'users' | 'notifications' | 'settings' | 'myOrders'
 
 const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: string }> }> = [
     { id: 'dashboard', label: 'Dashboard', icon: DashIcon },
     { id: 'orders', label: 'Orders', icon: OrderIcon },
-    { id: 'customers', label: 'Customers', icon: CustomerIcon },
     { id: 'reports', label: 'Reports', icon: ReportIcon },
+    { id: 'customers', label: 'Customers', icon: CustomerIcon },
     { id: 'notifications', label: 'Notifications', icon: BellIcon },
     { id: 'users', label: 'Users', icon: UserIcon },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
+    { id: 'myOrders', label: 'My Orders', icon: OrderIcon }
 ]
 
 export function SideBar({ activePage }: { activePage: string }) {

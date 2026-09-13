@@ -99,6 +99,10 @@ export function TopBar({
       heading = 'Notifications'
       subtitle = 'Alerts, reminders & activity feed'
       break
+    case 'myOrders':
+      heading = 'My Orders'
+      subtitle = 'Ongoing orders & history'
+      break
     default:
       heading = title
       break

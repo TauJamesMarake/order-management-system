@@ -74,7 +74,7 @@ export function Dashboard() {
   const { user } = useAuthStore()
   const [activePage] = useState('dashboard')
 
-const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
+  const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
 
 
   useEffect(() => {
@@ -117,7 +117,7 @@ const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
-<SideBar activePage={activePage} />
+      <SideBar activePage={activePage} />
 
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -184,7 +184,7 @@ const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
                     </select>
                   </div>
                   <div style={{ flex: 1, minWidth: 140 }}>
-                    <input type="text" placeholder="Filter Mineral Type" value={filters.mineralType} onChange={(e) => setFilter('mineralType', e.target.value)} style={fieldStyle} />
+                    <input type="text" placeholder="Filter Product Type" value={filters.mineralType} onChange={(e) => setFilter('mineralType', e.target.value)} style={fieldStyle} />
                   </div>
                   <div style={{ flex: 1, minWidth: 130 }}>
                     <input type="date" value={filters.dateFrom} onChange={(e) => setFilter('dateFrom', e.target.value)} style={fieldStyle} />

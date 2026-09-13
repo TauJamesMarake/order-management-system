@@ -7,6 +7,7 @@ import { Customers } from '@/pages/Customers'
 import { Users } from '@/pages/Users'
 import { Notifications } from '@/pages/Notifications'
 import { useAuthStore } from '@/stores/auth.store'
+import MyOrders from './pages/MyOrders'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -62,12 +63,21 @@ export default function App() {
           </ProtectedRoute>}
       />
 
-       <Route
+      <Route
         path="/notifications"
         element={
           <ProtectedRoute>
             <Notifications />
           </ProtectedRoute>}
+      />
+
+      <Route
+        path="/myOrders"
+        element={
+          <ProtectedRoute>
+            <MyOrders />
+          </ProtectedRoute>
+        }
       />
 
       <Route path="*" element={<Navigate to="/login" replace />} />

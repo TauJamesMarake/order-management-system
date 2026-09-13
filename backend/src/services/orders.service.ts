@@ -1,5 +1,4 @@
 import { supabase } from '../db/supabase'
-import { generateOrderNumber } from '../utils/orderNumber'
 import {
   iOrder,
   OrderStatus,
@@ -15,13 +14,26 @@ export async function createOrder(
   businessId: string,
 ): Promise<iOrder> {
 
-  const order_number = await generateOrderNumber(businessId)
+  const year = new Date().getFullYear()
+
+  const { data: orderNumber, error: orderNumberError } = await supabase
+    .rpc('fn_next_order_number', {
+      p_business_id: businessId,
+      p_year: year,
+    })
+
+  if (orderNumberError || !orderNumber) {
+    console.error('Order number RPC error:', orderNumberError)
+    throw new Error(
+      orderNumberError?.message || 'Failed to generate order number.'
+    )
+  }
 
   const { data, error } = await supabase
     .from('orders')
     .insert({
       business_id: businessId,
-      order_number,
+      order_number: orderNumber,
       client_name: dto.client_name.trim(),
       mineral_type: dto.mineral_type.trim(),
       quantity_kg: dto.quantity_kg,
@@ -35,7 +47,11 @@ export async function createOrder(
     `)
     .single()
 
-  if (error) throw new Error('Failed to create order.')
+  if (error) {
+    console.error('Order insert error:', error)
+    throw new Error(error.message || 'Failed to create order.')
+  }
+
   return data as iOrder
 }
 
@@ -232,16 +248,18 @@ export async function getOrderSummary(
   })
 
   // Server-side SUM of active order values
-  const { data: valueData, error: valueErr } = await supabase
+  const { data: activeOrders, error: valueErr } = await supabase
     .from('orders')
-    .select('total_zar.sum()')
+    .select('total_zar')
     .eq('business_id', businessId)
     .in('status', ['pending', 'confirmed', 'dispatched'])
-    .single()
 
   if (valueErr) throw new Error('Failed to generate dashboard summary.')
 
-  const total_value_active_zar = Number((valueData as any)?.sum ?? 0)
+  const total_value_active_zar = (activeOrders ?? []).reduce(
+    (sum, row) => sum + Number(row.total_zar),
+    0
+  )
 
   return {
     total_today: todayResult.count ?? 0,

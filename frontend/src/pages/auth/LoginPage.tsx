@@ -223,7 +223,7 @@ function BrandPanel() {
       {/* Copyright */}
       <div style={{ position: 'relative', zIndex: 1 }}>
         <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(239, 236, 230, 0.72)', letterSpacing: '0.04em' }}>
-          © {new Date().getFullYear()} Mare (Pty) Ltd
+          © {new Date().getFullYear()} Cloud Mare
         </p>
       </div>
     </div>

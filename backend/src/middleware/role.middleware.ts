@@ -22,16 +22,6 @@ export function requireRole(...allowedRoles: UserRole[]) {
   }
 }
 
-// requireOwnerOrAdmin
-//
-// Controller-level check (not route-level) because ownership
-// requires knowing the resource's owner, which means a DB fetch first.
-// Returns true if allowed, false if already responded with 403.
-//
-// USAGE (inside a controller):
-//   const order = await getOrderById(id)
-//   if (!requireOwnerOrAdmin(req, res, order.created_by)) return
-
 export function requireOwnerOrAdmin(
   req: Request,
   res: Response,

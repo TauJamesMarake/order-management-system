@@ -19,7 +19,6 @@ export async function verifyToken(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Step 1: Extract token
     const authHeader = req.headers.authorization
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -33,7 +32,6 @@ export async function verifyToken(
       return
     }
 
-    // Step 2: Verify JWT with Supabase Auth
     const {
       data: { user: authUser },
       error: authError,
@@ -44,7 +42,6 @@ export async function verifyToken(
       return
     }
 
-    // Step 3: Load user profile + business in one query
     const { supabase } = await import('../db/supabase')
     const { data: profile, error: profileError } = await supabase
       .from('users')
@@ -72,7 +69,6 @@ export async function verifyToken(
       return
     }
 
-    // Step 5: Reject suspended businesses
     const business = toOneRecord(profile.business)
 
     if (!business) {
@@ -89,7 +85,6 @@ export async function verifyToken(
       return
     }
 
-    // Step 6
     req.user = {
       id: profile.id,
       email: profile.email,
@@ -97,7 +92,6 @@ export async function verifyToken(
       business_id: profile.business_id,
     }
 
-    // Step 7: Proceed
     next()
 
   } catch (err) {
@@ -112,7 +106,6 @@ export async function verifyPlatformToken(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Step 1: Extract token
     const authHeader = req.headers.authorization
 
     if (!authHeader?.startsWith('Bearer ')) {

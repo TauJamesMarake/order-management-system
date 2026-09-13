@@ -111,7 +111,7 @@ export function OrdersPage() {
   const queryClient = useQueryClient()
   const activePage = 'orders'
   const [filters, setFilters] = useState<iFilterState>(FILTER_DEFAULTS)
-const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
   const [modal, setModal] = useState<OrderModalMode>(null)
   const [orderForm, setOrderForm] = useState<iOrderFormState>(ORDER_FORM_DEFAULTS)
@@ -248,7 +248,7 @@ const [hoveredRow, setHoveredRow] = useState<string | null>(null)
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
 
-<SideBar activePage={activePage} />
+      <SideBar activePage={activePage} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
@@ -378,7 +378,7 @@ const [hoveredRow, setHoveredRow] = useState<string | null>(null)
                   <div style={{ padding: '80px 0', textAlign: 'center' }}>
                     <p style={{ margin: '0 0 10px', fontSize: 14, color: T.inkGhost, fontWeight: 500 }}>
                       No register logs discovered fitting parameters.
-                      </p>
+                    </p>
                     <button onClick={() => setFilters(FILTER_DEFAULTS)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: T.teal, fontWeight: 600, textDecoration: 'underline' }}>
                       Clear Constraints
@@ -388,7 +388,7 @@ const [hoveredRow, setHoveredRow] = useState<string | null>(null)
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ backgroundColor: T.panelBg, borderBottom: `1px solid ${T.mutedCream}` }}>
-                        {['Order Ref ID', 'Client Account', 'Mineral Class', 'Quantity', 'Aggregate Price', 'Workflow State', 'Date Created', ''].map((heading, idx) => (
+                        {['Order Ref ID', 'Client Account', 'Item Class', 'Quantity', 'Aggregate Price', 'Workflow State', 'Date Created', ''].map((heading, idx) => (
                           <th key={heading || idx} style={{
                             padding: '16px 20px', fontSize: 11, fontWeight: 700, color: T.inkSecondary,
                             textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: idx === 3 || idx === 4 ? 'right' : 'left'
