@@ -151,7 +151,7 @@ export function Customers() {
                 {customersLoading ? (
                   <div style={{ padding: '60px 0', textAlign: 'center', color: T.inkGhost, fontSize: 13, fontWeight: 500 }}>Loading customer registry...</div>
                 ) : isError ? (
-                  <div style={{ padding: '40px 20px', textAlign: 'center', color: T.rust, fontSize: 13, fontWeight: 500 }}>Failed to retrieve customer registry.</div>
+                  <div style={{ padding: '40px 20px', textAlign: 'center', color: T.rust, fontSize: 13, fontWeight: 500 }}>Failed to load customer registry.</div>
                 ) : filtered.length === 0 ? (
                   <div style={{ padding: '60px 0', textAlign: 'center', color: T.inkGhost, fontSize: 12, fontWeight: 500 }}>
                     No customers match current search.

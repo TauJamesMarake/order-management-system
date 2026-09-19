@@ -1,5 +1,5 @@
 import { supabase } from '../db/supabase'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { iUser, UserRole } from '../types'
 
 const adminAuthClient = createClient(
@@ -14,7 +14,8 @@ export async function createUser(dto: {
   password: string
   full_name: string
   role: UserRole
-}, businessId: string): Promise<iUser> {
+}, businessId: string, tenantSupabase: SupabaseClient): Promise<iUser> {
+
   // Create Supabase Auth account
   const { data: authData, error: authError } = await adminAuthClient
     .auth
@@ -31,7 +32,7 @@ export async function createUser(dto: {
 
   const authUserId = authData.user.id
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: profileError } = await tenantSupabase
     .from('users')
     .insert({
       id: authUserId,
@@ -53,11 +54,12 @@ export async function createUser(dto: {
 }
 
 // Get all users
-export async function getUsers(filters?: {
+export async function getUsers(filters: {
   role?: UserRole
   is_active?: boolean
-}, businessId?: string): Promise<iUser[]> {
-  let query = supabase
+}, businessId: string, tenantSupabase: SupabaseClient
+): Promise<iUser[]> {
+  let query = tenantSupabase
     .from('users')
     .select('*')
     .eq('business_id', businessId)
@@ -78,9 +80,13 @@ export async function getUsers(filters?: {
   return (data ?? []) as iUser[]
 }
 
-// Get one
-export async function getUserById(id: string, businessId: string): Promise<iUser> {
-  const { data, error } = await supabase
+// Get one by Id
+export async function getUserById(
+  id: string,
+  businessId: string,
+  tenantSupabase: SupabaseClient
+): Promise<iUser> {
+  const { data, error } = await tenantSupabase
     .from('users')
     .select('*')
     .eq('id', id)
@@ -100,8 +106,8 @@ export async function updateUser(
     role?: UserRole
     is_active?: boolean
   },
-  businessId: string
-
+  businessId: string,
+  tenantSupabase: SupabaseClient
 ): Promise<iUser> {
   const payload: Partial<typeof dto> = {}
   if (dto.full_name !== undefined) payload.full_name = dto.full_name.trim()
@@ -112,7 +118,7 @@ export async function updateUser(
     throw new Error('No valid fields provided for update.')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await tenantSupabase
     .from('users')
     .update(payload)
     .eq('id', id)
@@ -128,8 +134,8 @@ export async function updateUser(
 }
 
 // DEACTIVATE (soft delete)
-export async function deactivateUser(id: string, businessId: string): Promise<iUser> {
-  const current = await getUserById(id, businessId)
+export async function deactivateUser(id: string, businessId: string, tenantSupabase: SupabaseClient): Promise<iUser> {
+  const current = await getUserById(id, businessId, tenantSupabase)
 
   if (!current.is_active) {
     throw new Error('User is already deactivated.')
@@ -137,12 +143,12 @@ export async function deactivateUser(id: string, businessId: string): Promise<iU
 
   await adminAuthClient.auth.admin.updateUserById(id, { ban_duration: '876600h' }) // 100 years
 
-  const updated = await updateUser(id, { is_active: false }, businessId)
+  const updated = await updateUser(id, { is_active: false }, businessId, tenantSupabase)
   return updated
 }
 
-export async function reactivateUser(id: string, businessId: string): Promise<iUser> {
-  const current = await getUserById(id, businessId)
+export async function reactivateUser(id: string, businessId: string, tenantSupabase: SupabaseClient): Promise<iUser> {
+  const current = await getUserById(id, businessId, tenantSupabase)
 
   if (current.is_active) {
     throw new Error('User is already active.')
@@ -150,6 +156,6 @@ export async function reactivateUser(id: string, businessId: string): Promise<iU
 
   await adminAuthClient.auth.admin.updateUserById(id, { ban_duration: 'none' })
 
-  const updated = await updateUser(id, { is_active: true }, businessId)
+  const updated = await updateUser(id, { is_active: true }, businessId, tenantSupabase)
   return updated
 }

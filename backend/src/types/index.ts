@@ -1,4 +1,5 @@
 import { Request } from 'express'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 export type UserRole = 'admin' | 'clerk' | 'viewer'
 
@@ -127,6 +128,9 @@ declare global {
         role: UserRole
         business_id: string
       }
+
+      tenantSupabase?: SupabaseClient
+
       platformAdmin?: {
         id: string
         email: string

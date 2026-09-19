@@ -86,9 +86,11 @@ interface iOrderFormState {
   quantity_kg: string
   unit_price_zar: string
   notes: string
+  status: OrderStatus
 }
+
 const ORDER_FORM_DEFAULTS: iOrderFormState = {
-  client_name: '', mineral_type: '', quantity_kg: '', unit_price_zar: '', notes: '',
+  client_name: '', mineral_type: '', quantity_kg: '', unit_price_zar: '', notes: '', status: 'pending'
 }
 
 type OrderModalMode = { kind: 'create' } | { kind: 'edit'; order: iOrder } | null
@@ -98,7 +100,6 @@ function canManageOrders(role: string | undefined): boolean {
   return role === 'admin' || role === 'clerk'
 }
 
-// Ownership check — the list view (v_orders_with_creator) exposes the creator as `creator_id`,
 function isOrderOwner(order: iOrder, userId: string | undefined): boolean {
   if (!userId) return false
   const ownerId = (order as unknown as { creator_id?: string }).creator_id ?? order.created_by
@@ -178,20 +179,25 @@ export function OrdersPage() {
   })
 
   function openCreateOrder() {
+    // Reset the form to the default values when creating a new order.
     setOrderForm(ORDER_FORM_DEFAULTS)
     setFormError(null)
     setModal({ kind: 'create' })
   }
 
   function openEditOrder(order: iOrder) {
+    // Load all existing order values
     setOrderForm({
       client_name: order.client_name,
       mineral_type: order.mineral_type,
       quantity_kg: String(order.quantity_kg),
       unit_price_zar: String(order.unit_price_zar),
       notes: order.notes ?? '',
+      status: order.status,
     })
+
     setFormError(null)
+
     setModal({ kind: 'edit', order })
   }
 
@@ -200,6 +206,7 @@ export function OrdersPage() {
     setFormError(null)
   }
 
+  // Handle both create and edit submissions from the order modal.
   function handleOrderSubmit(e: React.FormEvent) {
     e.preventDefault()
     setFormError(null)
@@ -211,25 +218,41 @@ export function OrdersPage() {
       setFormError('Quantity must be a positive number.')
       return
     }
+
     if (!Number.isFinite(unit_price_zar) || unit_price_zar <= 0) {
       setFormError('Unit price must be a positive number.')
       return
     }
 
-    const dto = {
-      client_name: orderForm.client_name.trim(),
-      mineral_type: orderForm.mineral_type.trim(),
-      quantity_kg,
-      unit_price_zar,
-      notes: orderForm.notes.trim() || undefined,
-    }
-
+    // CREATE DTO
     if (modal?.kind === 'create') {
+      const dto: iCreateOrderDTO = {
+        client_name: orderForm.client_name.trim(),
+        mineral_type: orderForm.mineral_type.trim(),
+        quantity_kg,
+        unit_price_zar,
+        notes: orderForm.notes.trim() || undefined,
+      }
+
       createMutation.mutate(dto)
       return
     }
+
+    // UPDATE DTO
     if (modal?.kind === 'edit') {
-      updateMutation.mutate({ id: modal.order.id, dto })
+      const dto: iUpdateOrderDTO = {
+        client_name: orderForm.client_name.trim(),
+        mineral_type: orderForm.mineral_type.trim(),
+        quantity_kg,
+        unit_price_zar,
+        notes: orderForm.notes.trim() || undefined,
+        status: orderForm.status,
+      }
+
+      updateMutation.mutate({
+        id: modal.order.id,
+        dto,
+      })
     }
   }
 
@@ -367,7 +390,7 @@ export function OrdersPage() {
               {isError && (
                 <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 10, backgroundColor: `${T.rust}08`, borderBottom: `1px solid ${T.rust}15` }}>
                   <AlertIcon />
-                  <span style={{ fontSize: 13, color: T.rust, fontWeight: 500 }}>System failed to retrieve requested ledger entries. Please check cloud sync logs.</span>
+                  <span style={{ fontSize: 13, color: T.rust, fontWeight: 500 }}>System failed to load requested ledger entries. Please check cloud sync logs.</span>
                 </div>
               )}
 
@@ -388,7 +411,7 @@ export function OrdersPage() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ backgroundColor: T.panelBg, borderBottom: `1px solid ${T.mutedCream}` }}>
-                        {['Order Ref ID', 'Client Account', 'Item Class', 'Quantity', 'Aggregate Price', 'Workflow State', 'Date Created', ''].map((heading, idx) => (
+                        {['Order Ref ID', 'Client Account', 'Item Name', 'Quantity', 'Price', 'Workflow State', 'Date Created', ''].map((heading, idx) => (
                           <th key={heading || idx} style={{
                             padding: '16px 20px', fontSize: 11, fontWeight: 700, color: T.inkSecondary,
                             textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: idx === 3 || idx === 4 ? 'right' : 'left'
@@ -599,6 +622,37 @@ export function OrdersPage() {
                 style={{ padding: '10px 12px', borderRadius: 8, border: `1px solid ${T.mutedCream}`, fontSize: 13, backgroundColor: T.panelBg }}
               />
             </label>
+
+            {modal.kind === 'edit' && (
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSecondary }}>
+                  Order Status
+                </span>
+
+                <select
+                  value={orderForm.status}
+                  onChange={(e) =>
+                    setOrderForm((f) => ({
+                      ...f,
+                      status: e.target.value as OrderStatus,
+                    }))
+                  }
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    border: `1px solid ${T.mutedCream}`,
+                    fontSize: 13,
+                    backgroundColor: T.panelBg,
+                  }}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="dispatched">Dispatched</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </label>
+            )}
 
             <div style={{ display: 'flex', gap: 12 }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>

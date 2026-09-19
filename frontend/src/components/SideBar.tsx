@@ -4,6 +4,8 @@ import { T } from '@/components/ColorPalette'
 import { Settings } from '@/components/Settings'
 import { useAuthStore } from '@/stores/auth.store'
 
+import omsLogo from '../assets/cloudmare_logo.png'
+
 function DashIcon({ color }: { color: string }) {
     return (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -145,7 +147,9 @@ export function SideBar({ activePage }: { activePage: string }) {
                             justifyContent: 'center',
                         }}
                     >
-                        <span style={{ color: T.white, fontWeight: 800, fontSize: 20 }}>M</span>
+                        <span style={{ color: T.white, fontWeight: 800, fontSize: 20 }}>
+                            <img src={omsLogo} alt="OMS Logo" width={100} height={100} />
+                        </span>
                     </div>
                     <div>
                         <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: T.darkBg, letterSpacing: '0.02em' }}>M A R E</p>

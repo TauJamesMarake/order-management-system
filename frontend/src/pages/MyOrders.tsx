@@ -142,7 +142,7 @@ export function MyOrders() {
                                 {isLoading ? (
                                     <div style={{ padding: '60px 0', textAlign: 'center', color: T.inkGhost, fontSize: 13, fontWeight: 500 }}>Loading your orders...</div>
                                 ) : isError ? (
-                                    <div style={{ padding: '40px 20px', textAlign: 'center', color: T.rust, fontSize: 13, fontWeight: 500 }}>Failed to retrieve your orders.</div>
+                                    <div style={{ padding: '40px 20px', textAlign: 'center', color: T.rust, fontSize: 13, fontWeight: 500 }}>Failed to load orders.</div>
                                 ) : myOrders.length === 0 ? (
                                     <div style={{ padding: '60px 20px', textAlign: 'center', color: T.inkGhost, fontSize: 12, fontWeight: 500 }}>
                                         {searchValue.trim() ? 'No orders match your search.' : "No orders found under your name yet."}

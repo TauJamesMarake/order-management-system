@@ -34,7 +34,7 @@ export async function getUsers(req: Request, res: Response): Promise<void> {
                 : undefined,
         }
 
-        const users = await UsersService.getUsers(filters, req.user!.business_id)
+        const users = await UsersService.getUsers(filters, req.user!.business_id, req.tenantSupabase!)
         sendSuccess(res, users)
     } catch (err) {
         console.error('[getUsers]', err)
@@ -55,7 +55,7 @@ export async function getUserById(req: Request, res: Response): Promise<void> {
             return
         }
 
-        const user = await UsersService.getUserById(id, req.user!.business_id)
+        const user = await UsersService.getUserById(id, req.user!.business_id, req.tenantSupabase!)
         sendSuccess(res, user)
     } catch (err) {
         console.error('[getUserById]', err)
@@ -76,7 +76,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
 
         const dto: CreateUserPayload = parsed.data
 
-        const user = await UsersService.createUser(dto, req.user!.business_id)
+        const user = await UsersService.createUser(dto, req.user!.business_id, req.tenantSupabase!)
         sendSuccess(res, user, 'User created successfully.', 201)
     } catch (err) {
         console.error('[createUser]', err)
@@ -109,7 +109,7 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
             ? parsed.data
             : { full_name: (parsed.data as { full_name: string }).full_name }
 
-        const updated = await UsersService.updateUser(id, safePayload, req.user!.business_id)
+        const updated = await UsersService.updateUser(id, safePayload, req.user!.business_id, req.tenantSupabase!)
         sendSuccess(res, updated, 'User updated successfully.')
     } catch (err) {
         console.error('[updateUser]', err)
@@ -129,7 +129,7 @@ export async function deactivateUser(req: Request, res: Response): Promise<void>
             return
         }
 
-        const user = await UsersService.deactivateUser(id, req.user!.business_id)
+        const user = await UsersService.deactivateUser(id, req.user!.business_id, req.tenantSupabase!)
         sendSuccess(res, user, 'User deactivated successfully.')
     } catch (err) {
         console.error('[deactivateUser]', err)
@@ -138,12 +138,11 @@ export async function deactivateUser(req: Request, res: Response): Promise<void>
 }
 
 // PATCH /api/users/:id/reactivate
-
 // Admin only
 export async function reactivateUser(req: Request, res: Response): Promise<void> {
     try {
         const { id } = req.params
-        const user = await UsersService.reactivateUser(id, req.user!.business_id)
+        const user = await UsersService.reactivateUser(id, req.user!.business_id, req.tenantSupabase!)
         sendSuccess(res, user, 'User reactivated successfully.')
     } catch (err) {
         console.error('[reactivateUser]', err)

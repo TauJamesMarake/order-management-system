@@ -1,7 +1,6 @@
 import { Request, Response } from 'express'
 import { z } from 'zod'
 import { sendSuccess, sendError } from '../utils/response'
-import { supabase } from '../db/supabase'
 import * as OrdersService from '../services/orders.service'
 import * as ReportsService from '../services/reports.service'
 import { iOrderFilters, OrderStatus } from '../types'
@@ -56,8 +55,8 @@ function parseReportFilters(
   }
 }
 
-async function resolveOrderPrefix(businessId: string): Promise<string> {
-  const { data } = await supabase
+async function resolveOrderPrefix(businessId: string, tenantSupabase: NonNullable<Request['tenantSupabase']>): Promise<string> {
+  const { data } = await tenantSupabase
     .from('businesses')
     .select('order_prefix')
     .eq('id', businessId)
@@ -74,7 +73,7 @@ export async function getSummary(req: Request, res: Response): Promise<void> {
       return
     }
 
-    const result = await OrdersService.getOrders(filters, req.user!.business_id)
+    const result = await OrdersService.getOrders(filters, req.user!.business_id, req.tenantSupabase!)
     const orders = result.items
 
     const totalValue = orders.reduce((sum, o) => sum + Number(o.total_zar), 0)
@@ -122,7 +121,7 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
       return
     }
 
-    const result = await OrdersService.getOrders(filters, req.user!.business_id)
+    const result = await OrdersService.getOrders(filters, req.user!.business_id, req.tenantSupabase!)
 
     if (result.items.length === 0) {
       sendError(res, 'No orders found for the selected filters.', 404)
@@ -140,7 +139,7 @@ export async function exportExcel(req: Request, res: Response): Promise<void> {
       ? `_${filters.date_from}_to_${filters.date_to}`
       : `_${new Date().toISOString().slice(0, 10)}`
 
-    const prefix = await resolveOrderPrefix(req.user!.business_id)
+    const prefix = await resolveOrderPrefix(req.user!.business_id, req.tenantSupabase!)
     const filename = `${prefix}_orders${datePart}.xlsx`
 
 
@@ -167,7 +166,7 @@ export async function exportPdf(req: Request, res: Response): Promise<void> {
       return
     }
 
-    const result = await OrdersService.getOrders(filters, req.user!.business_id)
+    const result = await OrdersService.getOrders(filters, req.user!.business_id, req.tenantSupabase!)
 
     if (result.items.length === 0) {
       sendError(res, 'No orders found for the selected filters.', 404)
@@ -185,7 +184,7 @@ export async function exportPdf(req: Request, res: Response): Promise<void> {
         ? `_${filters.date_from}_to_${filters.date_to}`
         : `_${new Date().toISOString().slice(0, 10)}`
 
-    const prefix = await resolveOrderPrefix(req.user!.business_id)
+    const prefix = await resolveOrderPrefix(req.user!.business_id, req.tenantSupabase!)
     const filename = `${prefix}_orders${datePart}.pdf`
 
     res.setHeader('Content-Type', 'application/pdf')

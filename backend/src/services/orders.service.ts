@@ -1,4 +1,4 @@
-import { supabase } from '../db/supabase'
+import { SupabaseClient } from '@supabase/supabase-js'
 import {
   iOrder,
   OrderStatus,
@@ -12,11 +12,12 @@ export async function createOrder(
   dto: iCreateOrderDTO,
   createdById: string,
   businessId: string,
+  tenantSupabase: SupabaseClient,
 ): Promise<iOrder> {
 
   const year = new Date().getFullYear()
 
-  const { data: orderNumber, error: orderNumberError } = await supabase
+  const { data: orderNumber, error: orderNumberError } = await tenantSupabase
     .rpc('fn_next_order_number', {
       p_business_id: businessId,
       p_year: year,
@@ -29,7 +30,7 @@ export async function createOrder(
     )
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await tenantSupabase
     .from('orders')
     .insert({
       business_id: businessId,
@@ -59,13 +60,14 @@ export async function createOrder(
 export async function getOrders(
   filters: iOrderFilters,
   businessId: string,
+  tenantSupabase: SupabaseClient,
 ): Promise<iPaginatedResult<iOrder>> {
   const page = Math.max(1, filters.page ?? 1)
   const limit = Math.min(100, Math.max(1, filters.limit ?? 20))
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  let query = supabase
+  let query = tenantSupabase
     .from('v_orders_with_creator')
     .select('*', { count: 'exact' })
     .eq('business_id', businessId)
@@ -115,12 +117,13 @@ export async function getOrders(
   }
 }
 
-// Get one
+// Get one order
 export async function getOrderById(
   id: string,
   businessId: string,
+  tenantSupabase: SupabaseClient,
 ): Promise<iOrder> {
-  const { data, error } = await supabase
+  const { data, error } = await tenantSupabase
     .from('orders')
     .select(`
       *,
@@ -139,9 +142,10 @@ export async function updateOrder(
   id: string,
   dto: iUpdateOrderDTO,
   businessId: string,
+  tenantSupabase: SupabaseClient,
 ): Promise<{ previous: iOrder; updated: iOrder }> {
 
-  const previous = await getOrderById(id, businessId)
+  const previous = await getOrderById(id, businessId, tenantSupabase)
 
   // Build the payload from only the provided fields
   const payload: Partial<iUpdateOrderDTO> = {}
@@ -156,7 +160,7 @@ export async function updateOrder(
     throw new Error('No valid fields provided for update.')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await tenantSupabase
     .from('orders')
     .update(payload)
     .eq('id', id)
@@ -175,8 +179,9 @@ export async function updateOrder(
 export async function cancelOrder(
   id: string,
   businessId: string,
+  tenantSupabase: SupabaseClient,
 ): Promise<iOrder> {
-  const current = await getOrderById(id, businessId)
+  const current = await getOrderById(id, businessId, tenantSupabase)
 
   if (current.status === 'cancelled') {
     throw new Error('Order is already cancelled.')
@@ -186,7 +191,7 @@ export async function cancelOrder(
     throw new Error('Delivered orders cannot be cancelled.')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await tenantSupabase
     .from('orders')
     .update({ status: 'cancelled' })
     .eq('id', id)
@@ -203,6 +208,7 @@ export async function cancelOrder(
 
 export async function getOrderSummary(
   businessId: string,
+  tenantSupabase: SupabaseClient,
 ): Promise<{
   total_today: number
   by_status: Record<string, number>
@@ -221,7 +227,7 @@ export async function getOrderSummary(
   ] = await Promise.all([
 
     // Orders created the current day for the business
-    supabase
+    tenantSupabase
       .from('orders')
       .select('*', { count: 'exact', head: true })
       .eq('business_id', businessId)
@@ -229,7 +235,7 @@ export async function getOrderSummary(
 
     // Per-status counts
     ...statuses.map(status =>
-      supabase
+      tenantSupabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
         .eq('business_id', businessId)
@@ -247,8 +253,7 @@ export async function getOrderSummary(
     by_status[status] = result.count ?? 0
   })
 
-  // Server-side SUM of active order values
-  const { data: activeOrders, error: valueErr } = await supabase
+  const { data: activeOrders, error: valueErr } = await tenantSupabase
     .from('orders')
     .select('total_zar')
     .eq('business_id', businessId)

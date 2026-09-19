@@ -326,7 +326,7 @@ export function Users() {
             }}>
               {isError && (
                 <div style={{ padding: '14px 20px', backgroundColor: `${T.rust}08`, borderBottom: `1px solid ${T.rust}15` }}>
-                  <span style={{ fontSize: 13, color: T.rust, fontWeight: 500 }}>Failed to retrieve personnel registry.</span>
+                  <span style={{ fontSize: 13, color: T.rust, fontWeight: 500 }}>Loading personnel registry failed.</span>
                 </div>
               )}
 

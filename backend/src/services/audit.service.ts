@@ -1,4 +1,4 @@
-import { supabase } from '../db/supabase'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { iOrder } from '../types'
 
 function logAuditError(context: string, message: string, detail?: unknown): void {
@@ -27,6 +27,7 @@ export async function logOrderChanges(
   previous: iOrder,
   updated: iOrder,
   businessId: string,
+  tenantSupabase: SupabaseClient,
 ): Promise<void> {
   const entries: {
     business_id: string
@@ -55,7 +56,7 @@ export async function logOrderChanges(
 
   if (entries.length === 0) return
 
-  const { error } = await supabase.from('audit_logs').insert(entries)
+  const { error } = await tenantSupabase.from('audit_logs').insert(entries)
 
   if (error) {
     logAuditError(
@@ -70,9 +71,10 @@ export async function logOrderCreated(
   orderId: string,
   changedById: string,
   orderNumber: string,
-  businessId: string
+  businessId: string,
+  tenantSupabase: SupabaseClient,
 ): Promise<void> {
-  const { error } = await supabase.from('audit_logs').insert({
+  const { error } = await tenantSupabase.from('audit_logs').insert({
     business_id: businessId,
     order_id: orderId,
     changed_by: changedById,
@@ -94,9 +96,10 @@ export async function logOrderCancelled(
   orderId: string,
   changedById: string,
   previousStatus: string,
-  businessId: string
+  businessId: string,
+  tenantSupabase: SupabaseClient,
 ): Promise<void> {
-  const { error } = await supabase.from('audit_logs').insert({
+  const { error } = await tenantSupabase.from('audit_logs').insert({
     business_id: businessId,
     order_id: orderId,
     changed_by: changedById,
@@ -114,8 +117,8 @@ export async function logOrderCancelled(
   }
 }
 
-export async function getAuditLogsForOrder(orderId: string, businessId: string) {
-  const { data, error } = await supabase
+export async function getAuditLogsForOrder(orderId: string, businessId: string, tenantSupabase: SupabaseClient) {
+  const { data, error } = await tenantSupabase
     .from('audit_logs')
     .select(`
       *,

@@ -42,7 +42,7 @@ export async function verifyToken(
       return
     }
 
-    const { supabase } = await import('../db/supabase')
+    const { supabase, createTenantClient } = await import('../db/supabase')
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select(`
@@ -85,12 +85,16 @@ export async function verifyToken(
       return
     }
 
+    const tenantSupabase = createTenantClient(token)
+
     req.user = {
       id: profile.id,
       email: profile.email,
       role: profile.role as UserRole,
       business_id: profile.business_id,
     }
+
+    req.tenantSupabase = tenantSupabase
 
     next()
 

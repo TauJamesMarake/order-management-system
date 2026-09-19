@@ -33,6 +33,11 @@ export async function createOrder(
   res: Response
 ): Promise<void> {
   try {
+    if (!req.tenantSupabase) {
+      sendError(res, 'Tenant database client unavailable.', 500)
+      return
+    }
+
     const parsed = CreateOrderSchema.safeParse(req.body)
     if (!parsed.success) {
       sendError(res, 'Validation failed.', 400, parsed.error.flatten().fieldErrors)
@@ -43,9 +48,10 @@ export async function createOrder(
       parsed.data,
       req.user.id,
       req.user.business_id,
+      req.tenantSupabase!
     )
 
-    await AuditService.logOrderCreated(order.id, req.user.id, order.order_number, req.user.business_id)
+    await AuditService.logOrderCreated(order.id, req.user.id, order.order_number, req.user.business_id, req.tenantSupabase!)
 
     sendSuccess(res, order, 'Order created successfully.', 201)
   } catch (err) {
@@ -61,6 +67,11 @@ export async function getOrders(
   res: Response
 ): Promise<void> {
   try {
+    if (!req.tenantSupabase) {
+      sendError(res, 'Tenant database client unavailable.', 500)
+      return
+    }
+
     const filters: iOrderFilters = {
       status: req.query.status as string | undefined as any,
       mineral_type: req.query.mineral_type as string | undefined,
@@ -72,7 +83,7 @@ export async function getOrders(
       limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 20,
     }
 
-    const result = await OrdersService.getOrders(filters, req.user.business_id)
+    const result = await OrdersService.getOrders(filters, req.user.business_id, req.tenantSupabase!)
     sendSuccess(res, result)
   } catch (err) {
     console.error('[getOrders]', err)
@@ -86,7 +97,13 @@ export async function getOrderSummary(
   res: Response
 ): Promise<void> {
   try {
-    const summary = await OrdersService.getOrderSummary(req.user.business_id)
+
+    if (!req.tenantSupabase) {
+      sendError(res, 'Tenant database client unavailable.', 500)
+      return
+    }
+
+    const summary = await OrdersService.getOrderSummary(req.user.business_id, req.tenantSupabase!)
     sendSuccess(res, summary)
   } catch (err) {
     console.error('[getOrderSummary]', err)
@@ -100,8 +117,13 @@ export async function getOrderById(
   res: Response
 ): Promise<void> {
   try {
+    if (!req.tenantSupabase) {
+      sendError(res, 'Tenant database client unavailable.', 500)
+      return
+    }
+
     const { id } = req.params
-    const order = await OrdersService.getOrderById(id, req.user.business_id)
+    const order = await OrdersService.getOrderById(id, req.user.business_id, req.tenantSupabase!)
     sendSuccess(res, order)
   } catch (err) {
     console.error('[getOrderById]', err)
@@ -116,10 +138,16 @@ export async function getOrderAuditLog(
   res: Response
 ): Promise<void> {
   try {
+
+    if (!req.tenantSupabase) {
+      sendError(res, 'Tenant database client unavailable.', 500)
+      return
+    }
+
     const { id } = req.params
     // confirms order exists
-    await OrdersService.getOrderById(id, req.user.business_id)
-    const logs = await AuditService.getAuditLogsForOrder(id, req.user.business_id)
+    await OrdersService.getOrderById(id, req.user.business_id, req.tenantSupabase!)
+    const logs = await AuditService.getAuditLogsForOrder(id, req.user.business_id, req.tenantSupabase!)
     sendSuccess(res, logs)
   } catch (err) {
     console.error('[getOrderAuditLog]', err)
@@ -134,6 +162,11 @@ export async function updateOrder(
   res: Response
 ): Promise<void> {
   try {
+    if (!req.tenantSupabase) {
+      sendError(res, 'Tenant database client unavailable.', 500)
+      return
+    }
+
     const { id } = req.params
 
     const parsed = UpdateOrderSchema.safeParse(req.body)
@@ -142,7 +175,7 @@ export async function updateOrder(
       return
     }
 
-    const current = await OrdersService.getOrderById(id, req.user.business_id)
+    const current = await OrdersService.getOrderById(id, req.user.business_id, req.tenantSupabase!)
 
     if (!requireOwnerOrAdmin(req, res, current.created_by)) return
 
@@ -156,8 +189,8 @@ export async function updateOrder(
       return
     }
 
-    const { previous, updated } = await OrdersService.updateOrder(id, parsed.data, req.user.business_id)
-    await AuditService.logOrderChanges(id, req.user.id, previous, updated, req.user.business_id)
+    const { previous, updated } = await OrdersService.updateOrder(id, parsed.data, req.user.business_id, req.tenantSupabase!)
+    await AuditService.logOrderChanges(id, req.user.id, previous, updated, req.user.business_id, req.tenantSupabase!)
 
     sendSuccess(res, updated, 'Order updated successfully.')
   } catch (err) {
@@ -173,13 +206,18 @@ export async function cancelOrder(
   res: Response
 ): Promise<void> {
   try {
+    if (!req.tenantSupabase) {
+      sendError(res, 'Tenant database client unavailable.', 500)
+      return
+    }
+
     const { id } = req.params
-    const current = await OrdersService.getOrderById(id, req.user.business_id)
+    const current = await OrdersService.getOrderById(id, req.user.business_id, req.tenantSupabase!)
 
     if (!requireOwnerOrAdmin(req, res, current.created_by)) return
 
-    const cancelled = await OrdersService.cancelOrder(id, req.user.business_id)
-    await AuditService.logOrderCancelled(id, req.user.id, current.status, req.user.business_id)
+    const cancelled = await OrdersService.cancelOrder(id, req.user.business_id, req.tenantSupabase!)
+    await AuditService.logOrderCancelled(id, req.user.id, current.status, req.user.business_id, req.tenantSupabase)
 
     sendSuccess(res, cancelled, 'Order cancelled successfully.')
   } catch (err) {

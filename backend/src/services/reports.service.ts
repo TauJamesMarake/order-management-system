@@ -7,8 +7,8 @@ import { iOrder } from '../types'
  *   Transform raw order data into downloadable file buffers.
  *   Returns a Buffer — the controller streams it to the client.
  * TWO OUTPUTS:
- *   buildExcelReport() → .xlsx buffer via ExcelJS
- *   buildPdfReport()   → .pdf buffer via jsPDF + autoTable
+ *   buildExcelReport() : .xlsx buffer via ExcelJS
+ *   buildPdfReport()   : .pdf buffer via jsPDF + autoTable
 */
 
 // Shared formatting helpers
@@ -182,7 +182,7 @@ export async function buildExcelReport(
   // Sheet 2: Summary by Mineral
   const mineralSheet = workbook.addWorksheet('By Mineral')
   mineralSheet.columns = [
-    { header: 'Mineral Type', key: 'mineral', width: 22 },
+    { header: 'Product Type', key: 'mineral', width: 22 },
     { header: 'Order Count', key: 'count', width: 14 },
     { header: 'Total Qty (kg)', key: 'qty', width: 18 },
     { header: 'Total Value', key: 'value', width: 18 },
@@ -197,7 +197,7 @@ export async function buildExcelReport(
   })
   mHeader.height = 20
 
-  // Aggregate by mineral type
+  // Aggregate by mineral/product type
   const mineralMap = new Map<string, { count: number; qty: number; value: number }>()
   orders.forEach(o => {
     const key = o.mineral_type
@@ -240,16 +240,16 @@ export async function buildPdfReport(
   orders: iOrder[],
   filters: { date_from?: string; date_to?: string; status?: string }
 ): Promise<Buffer> {
-  const { default: jsPDF } = await import('jspdf')
-  await import('jspdf-autotable')
+  const { jsPDF } = await import('jspdf')
+  const { default: autoTable } = await import('jspdf-autotable')
 
-  const doc = new (jsPDF as any)({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+  const doc = new jsPDF ({ orientation: 'landscape', unit: 'mm', format: 'a4' })
 
-  const BLUE = [30, 58, 95]   // #1E3A5F
-  const MID = [46, 117, 182]  // #2E75B6
-  const GRAY = [245, 245, 245]
-  const WHITE = [255, 255, 255]
-  const BLACK = [34, 34, 34]
+  const BLUE: [number, number, number] = [30, 58, 95]   // #1E3A5F
+  const MID: [number, number, number] = [46, 117, 182]  // #2E75B6
+  const GRAY: [number, number, number] = [245, 245, 245]
+  const WHITE: [number, number, number] = [255, 255, 255]
+  const BLACK: [number, number, number] = [34, 34, 34]
 
   const pageW = doc.internal.pageSize.getWidth()
   const pageH = doc.internal.pageSize.getHeight()
@@ -262,7 +262,7 @@ export async function buildPdfReport(
   doc.setTextColor(...WHITE)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
-  doc.text('MARE OMS', margin, 8)
+  doc.text('CLOUDMARE OMS', margin, 8)
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
@@ -291,56 +291,56 @@ export async function buildPdfReport(
     formatDate(o.created_at),
   ])
 
-    ; (doc as any).autoTable({
-      startY: 28,
-      margin: { left: margin, right: margin },
-      head: [['Order #', 'Client', 'Mineral', 'Qty', 'Unit Price', 'Total', 'Status', 'Created By', 'Date']],
-      body: tableRows,
-      headStyles: {
-        fillColor: BLUE,
-        textColor: WHITE,
-        fontSize: 8,
-        fontStyle: 'bold',
-        halign: 'center',
-      },
-      bodyStyles: {
-        fontSize: 7.5,
-        textColor: BLACK,
-      },
-      alternateRowStyles: { fillColor: GRAY },
-      columnStyles: {
-        0: { cellWidth: 24, halign: 'center' },
-        3: { halign: 'right' },
-        4: { halign: 'right' },
-        5: { halign: 'right', fontStyle: 'bold' },
-        6: { halign: 'center' },
-        8: { halign: 'center' },
-      },
-      didDrawCell: (data: any) => {
-        // Colour status column text based on status value
-        if (data.section === 'body' && data.column.index === 6) {
-          const status = orders[data.row.index]?.status
-          const colourMap: Record<string, number[]> = {
-            pending: [133, 100, 4],
-            confirmed: [0, 64, 133],
-            dispatched: [12, 84, 96],
-            delivered: [21, 87, 36],
-            cancelled: [114, 28, 36],
-          }
-          if (status && colourMap[status]) {
-            doc.setTextColor(...colourMap[status])
-            doc.setFont('helvetica', 'bold')
-            doc.setFontSize(7.5)
-            doc.text(
-              capitalise(status),
-              data.cell.x + data.cell.width / 2,
-              data.cell.y + data.cell.height / 2 + 1,
-              { align: 'center' }
-            )
-          }
+  autoTable(doc, {
+    startY: 28,
+    margin: { left: margin, right: margin },
+    head: [['Order #', 'Client', 'Product', 'Qty', 'Unit Price', 'Total', 'Status', 'Created By', 'Date']],
+    body: tableRows,
+    headStyles: {
+      fillColor: BLUE,
+      textColor: WHITE,
+      fontSize: 8,
+      fontStyle: 'bold',
+      halign: 'center',
+    },
+    bodyStyles: {
+      fontSize: 7.5,
+      textColor: BLACK,
+    },
+    alternateRowStyles: { fillColor: GRAY },
+    columnStyles: {
+      0: { cellWidth: 24, halign: 'center' },
+      3: { halign: 'right' },
+      4: { halign: 'right' },
+      5: { halign: 'right', fontStyle: 'bold' },
+      6: { halign: 'center' },
+      8: { halign: 'center' },
+    },
+    didDrawCell: (data: any) => {
+      // Colour status column text based on status value
+      if (data.section === 'body' && data.column.index === 6) {
+        const status = orders[data.row.index]?.status
+        const colourMap: Record<string, [number, number, number]> = {
+          pending: [133, 100, 4],
+          confirmed: [0, 64, 133],
+          dispatched: [12, 84, 96],
+          delivered: [21, 87, 36],
+          cancelled: [114, 28, 36],
         }
-      },
-    })
+        if (status && colourMap[status]) {
+          doc.setTextColor(...colourMap[status])
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(7.5)
+          doc.text(
+            capitalise(status),
+            data.cell.x + data.cell.width / 2,
+            data.cell.y + data.cell.height / 2 + 1,
+            { align: 'center' }
+          )
+        }
+      }
+    },
+  })
 
   // Summary footer
   const finalY = (doc as any).lastAutoTable.finalY + 6
