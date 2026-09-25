@@ -19,6 +19,7 @@ export async function verifyToken(
   next: NextFunction
 ): Promise<void> {
   try {
+    // extract the token
     const authHeader = req.headers.authorization
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -32,6 +33,7 @@ export async function verifyToken(
       return
     }
 
+    // very the token with supabase auth
     const {
       data: { user: authUser },
       error: authError,
@@ -42,6 +44,7 @@ export async function verifyToken(
       return
     }
 
+    // Loads user profile + business
     const { supabase, createTenantClient } = await import('../db/supabase')
     const { data: profile, error: profileError } = await supabase
       .from('users')
@@ -63,12 +66,13 @@ export async function verifyToken(
       return
     }
 
-    // Step 4: Reject deactivated users
+    // Reject deactivated users
     if (!profile.is_active) {
       sendError(res, 'Your account has been deactivated. Contact your administrator.', 403)
       return
     }
 
+    // Reject suspended businesses
     const business = toOneRecord(profile.business)
 
     if (!business) {
@@ -95,7 +99,7 @@ export async function verifyToken(
     }
 
     req.tenantSupabase = tenantSupabase
-
+    req.token = token
     next()
 
   } catch (err) {

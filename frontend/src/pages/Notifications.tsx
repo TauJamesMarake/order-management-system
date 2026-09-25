@@ -1,13 +1,19 @@
 import { useState, useEffect, useMemo, type ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { get } from '@/lib/http'
+import { get, post, patch, del } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth.store'
-import type { iOrder, iPaginatedResult } from '@/types'
+import type {
+  iNotificationFeedItem,
+  iCustomReminder,
+  iCreateReminderDTO,
+  iUpdateReminderDTO,
+} from '@/types'
 import { TopBar } from '@/components/TopBar'
 import { SideBar } from '@/components/SideBar'
 import { T } from '@/components/ColorPalette'
+import { useNotificationsRealtime } from '@/hooks/useNotificationsRealtime'
 
 function fmtZAR(n: number): string {
   return new Intl.NumberFormat('en-ZA', {
@@ -76,14 +82,6 @@ interface iNotificationItem {
   done?: boolean
 }
 
-interface iCustomReminder {
-  id: string
-  title: string
-  detail: string
-  createdAt: string
-  done: boolean
-}
-
 const TONE_CFG: Record<NotificationTone, { bg: string; text: string; Icon: (p: { color: string }) => ReactElement }> = {
   action: { bg: '#FFF3E0', text: T.orange, Icon: ClockIcon },
   alert: { bg: '#FAE8E5', text: T.rust, Icon: AlertIcon },
@@ -91,38 +89,37 @@ const TONE_CFG: Record<NotificationTone, { bg: string; text: string; Icon: (p: {
   reminder: { bg: '#EDE7F6', text: '#6B4FBB', Icon: PinIcon },
 }
 
-// ── Local persistence helpers ──────────────────────────────────────────────
-// There is no backend notifications table yet, so custom reminders and
-// dismissed-notification state are kept in localStorage, namespaced per
-// business so different tenants sharing a browser don't see each other's data.
-function remindersKey(businessId: string) {
-  return `oms_reminders_${businessId}`
+// The only place order-status -> tone/copy mapping lives. The backend
+// deliberately returns raw order fields (not pre-formatted strings), so
+// currency formatting and copy stay a frontend concern, as before.
+const ORDER_STATUS_TITLE: Record<string, (orderNumber: string) => string> = {
+  pending: (n) => `${n} awaiting confirmation`,
+  confirmed: (n) => `${n} ready to dispatch`,
+  cancelled: (n) => `${n} was cancelled`,
+  delivered: (n) => `${n} delivered`,
 }
-function dismissedKey(businessId: string) {
-  return `oms_dismissed_notifications_${businessId}`
+const ORDER_STATUS_TONE: Record<string, NotificationTone> = {
+  pending: 'action', confirmed: 'action', cancelled: 'alert', delivered: 'info',
 }
 
-function loadReminders(businessId: string): iCustomReminder[] {
-  try {
-    const raw = localStorage.getItem(remindersKey(businessId))
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
+function toDisplayItem(item: iNotificationFeedItem): iNotificationItem {
+  if (item.kind === 'reminder') {
+    return {
+      id: item.id, tone: 'reminder', isCustom: true, done: item.done,
+      title: item.title,
+      detail: item.detail ?? '',
+      timestamp: item.timestamp,
+    }
   }
-}
-function saveReminders(businessId: string, reminders: iCustomReminder[]) {
-  localStorage.setItem(remindersKey(businessId), JSON.stringify(reminders))
-}
-function loadDismissed(businessId: string): string[] {
-  try {
-    const raw = localStorage.getItem(dismissedKey(businessId))
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
+  const buildTitle = ORDER_STATUS_TITLE[item.status]
+  return {
+    id: item.key,
+    tone: ORDER_STATUS_TONE[item.status] ?? 'info',
+    isCustom: false,
+    title: buildTitle ? buildTitle(item.order_number) : `${item.order_number} updated`,
+    detail: `${item.client_name} — ${item.mineral_type} — ${fmtZAR(item.total_zar)}`,
+    timestamp: item.timestamp,
   }
-}
-function saveDismissed(businessId: string, ids: string[]) {
-  localStorage.setItem(dismissedKey(businessId), JSON.stringify(ids))
 }
 
 interface iReminderFormState {
@@ -131,169 +128,104 @@ interface iReminderFormState {
 }
 const REMINDER_FORM_DEFAULTS: iReminderFormState = { title: '', detail: '' }
 
-type ReminderModalMode = { kind: 'create' } | { kind: 'edit'; reminder: iCustomReminder } | null
+type ReminderModalMode = { kind: 'create' } | { kind: 'edit'; id: string } | null
 
 /**
  * @component Notifications
- * @description Aggregates operationally relevant order activity — orders awaiting
- * action, recent cancellations, recent deliveries — with user-created reminders into
- * a single feed. Order-derived items can be dismissed (hidden locally); custom
- * reminders support full create/edit/delete. There is no dedicated notifications
- * table/endpoint yet, so both the order-derived feed and the reminder/dismissal
- * state are handled client-side (orders from /orders, reminders/dismissals in
- * localStorage, namespaced per business).
+ * @description Aggregates operationally relevant order activity with
+ * user-created reminders into a single live feed. Data comes from
+ * GET /api/notifications (order-derived items already filtered
+ * server-side against dismissals); custom reminders are full CRUD
+ * against /api/notifications/reminders. Live updates arrive via a
+ * Supabase Realtime subscription (see useNotificationsRealtime) that
+ * invalidates the feed query on any relevant change, in this tab or
+ * any other open session for the same business.
  */
 export function Notifications() {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const { user, token } = useAuthStore()
+  const queryClient = useQueryClient()
   const activePage = 'notifications'
   const [searchValue, setSearchValue] = useState('')
 
-  const [reminders, setReminders] = useState<iCustomReminder[]>([])
-  const [dismissed, setDismissed] = useState<string[]>([])
   const [reminderModal, setReminderModal] = useState<ReminderModalMode>(null)
   const [reminderForm, setReminderForm] = useState<iReminderFormState>(REMINDER_FORM_DEFAULTS)
+  const [reminderFormError, setReminderFormError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login', { replace: true })
-      return
-    }
-    setReminders(loadReminders(user.business_id))
-    setDismissed(loadDismissed(user.business_id))
+    if (!user) navigate('/login', { replace: true })
   }, [user, navigate])
 
-  const { data: pendingPage, isLoading: pendingLoading } = useQuery<iPaginatedResult<iOrder>>({
-    queryKey: ['notifications-pending'],
-    queryFn: () => get<iPaginatedResult<iOrder>>('/orders', { params: { status: 'pending', limit: 20, page: 1 } }),
-    enabled: !!user && canViewNotifications(user.role),
+  const canView = !!user && canViewNotifications(user.role)
+
+  const { data: feed, isLoading, isError } = useQuery<iNotificationFeedItem[]>({
+    queryKey: ['notifications'],
+    queryFn: () => get<iNotificationFeedItem[]>('/notifications'),
+    enabled: canView,
   })
 
-  const { data: confirmedPage, isLoading: confirmedLoading } = useQuery<iPaginatedResult<iOrder>>({
-    queryKey: ['notifications-confirmed'],
-    queryFn: () => get<iPaginatedResult<iOrder>>('/orders', { params: { status: 'confirmed', limit: 20, page: 1 } }),
-    enabled: !!user && canViewNotifications(user.role),
+  useNotificationsRealtime(token, user?.business_id, canView)
+
+  const invalidateFeed = () => queryClient.invalidateQueries({ queryKey: ['notifications'] })
+
+  const createReminderMutation = useMutation({
+    mutationFn: (dto: iCreateReminderDTO) => post<iCustomReminder>('/notifications/reminders', dto),
+    onSuccess: () => { invalidateFeed(); closeReminderModal() },
+    onError: (err: Error) => setReminderFormError(err.message),
   })
 
-  const { data: cancelledPage, isLoading: cancelledLoading } = useQuery<iPaginatedResult<iOrder>>({
-    queryKey: ['notifications-cancelled'],
-    queryFn: () => get<iPaginatedResult<iOrder>>('/orders', { params: { status: 'cancelled', limit: 10, page: 1 } }),
-    enabled: !!user && canViewNotifications(user.role),
+  const updateReminderMutation = useMutation({
+    mutationFn: ({ id, dto }: { id: string; dto: iUpdateReminderDTO }) =>
+      patch<iCustomReminder>(`/notifications/reminders/${id}`, dto),
+    onSuccess: () => { invalidateFeed(); closeReminderModal() },
+    onError: (err: Error) => setReminderFormError(err.message),
   })
 
-  const { data: deliveredPage, isLoading: deliveredLoading } = useQuery<iPaginatedResult<iOrder>>({
-    queryKey: ['notifications-delivered'],
-    queryFn: () => get<iPaginatedResult<iOrder>>('/orders', { params: { status: 'delivered', limit: 10, page: 1 } }),
-    enabled: !!user && canViewNotifications(user.role),
+  const toggleReminderMutation = useMutation({
+    mutationFn: (id: string) => patch<iCustomReminder>(`/notifications/reminders/${id}/toggle`),
+    onSuccess: invalidateFeed,
   })
 
-  const isLoading = pendingLoading || confirmedLoading || cancelledLoading || deliveredLoading
+  const deleteReminderMutation = useMutation({
+    mutationFn: (id: string) => del<void>(`/notifications/reminders/${id}`),
+    onSuccess: invalidateFeed,
+  })
 
-  // ── CRUD: custom reminders ────────────────────────────────────────────
-  function persistReminders(next: iCustomReminder[]) {
-    if (!user) return
-    setReminders(next)
-    saveReminders(user.business_id, next)
-  }
-
-  function createReminder(form: iReminderFormState) {
-    const newReminder: iCustomReminder = {
-      id: `reminder-${Date.now()}`,
-      title: form.title.trim(),
-      detail: form.detail.trim(),
-      createdAt: new Date().toISOString(),
-      done: false,
-    }
-    persistReminders([newReminder, ...reminders])
-  }
-
-  function updateReminder(id: string, form: iReminderFormState) {
-    persistReminders(reminders.map((r) => r.id === id ? { ...r, title: form.title.trim(), detail: form.detail.trim() } : r))
-  }
-
-  function toggleReminderDone(id: string) {
-    persistReminders(reminders.map((r) => r.id === id ? { ...r, done: !r.done } : r))
-  }
-
-  function deleteReminder(id: string) {
-    persistReminders(reminders.filter((r) => r.id !== id))
-  }
-
-  // ── Delete (dismiss): order-derived notifications ─────────────────────
-  function dismissNotification(id: string) {
-    if (!user) return
-    const next = [...dismissed, id]
-    setDismissed(next)
-    saveDismissed(user.business_id, next)
-  }
+  const dismissMutation = useMutation({
+    mutationFn: (key: string) => post<void>('/notifications/dismiss', { key }),
+    onSuccess: invalidateFeed,
+  })
 
   function openCreateReminder() {
     setReminderForm(REMINDER_FORM_DEFAULTS)
+    setReminderFormError(null)
     setReminderModal({ kind: 'create' })
   }
-  function openEditReminder(reminder: iCustomReminder) {
-    setReminderForm({ title: reminder.title, detail: reminder.detail })
-    setReminderModal({ kind: 'edit', reminder })
+  function openEditReminder(id: string, title: string, detail: string) {
+    setReminderForm({ title, detail })
+    setReminderFormError(null)
+    setReminderModal({ kind: 'edit', id })
   }
   function closeReminderModal() {
     setReminderModal(null)
+    setReminderFormError(null)
   }
   function handleReminderSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!reminderForm.title.trim()) return
-    if (reminderModal?.kind === 'create') createReminder(reminderForm)
-    if (reminderModal?.kind === 'edit') updateReminder(reminderModal.reminder.id, reminderForm)
-    closeReminderModal()
+    setReminderFormError(null)
+    const dto = { title: reminderForm.title.trim(), detail: reminderForm.detail.trim() || undefined }
+    if (reminderModal?.kind === 'create') createReminderMutation.mutate(dto)
+    if (reminderModal?.kind === 'edit') updateReminderMutation.mutate({ id: reminderModal.id, dto })
   }
 
+  const isSubmittingReminder = createReminderMutation.isPending || updateReminderMutation.isPending
+
   const items = useMemo<iNotificationItem[]>(() => {
-    const list: iNotificationItem[] = []
-
-    for (const order of pendingPage?.items ?? []) {
-      list.push({
-        id: `pending-${order.id}`, tone: 'action', isCustom: false,
-        title: `${order.order_number} awaiting confirmation`,
-        detail: `${order.client_name} — ${order.mineral_type} — ${fmtZAR(order.total_zar)}`,
-        timestamp: order.created_at,
-      })
-    }
-    for (const order of confirmedPage?.items ?? []) {
-      list.push({
-        id: `confirmed-${order.id}`, tone: 'action', isCustom: false,
-        title: `${order.order_number} ready to dispatch`,
-        detail: `${order.client_name} — ${order.mineral_type} — ${fmtZAR(order.total_zar)}`,
-        timestamp: order.updated_at,
-      })
-    }
-    for (const order of cancelledPage?.items ?? []) {
-      list.push({
-        id: `cancelled-${order.id}`, tone: 'alert', isCustom: false,
-        title: `${order.order_number} was cancelled`,
-        detail: `${order.client_name} — ${order.mineral_type} — ${fmtZAR(order.total_zar)}`,
-        timestamp: order.updated_at,
-      })
-    }
-    for (const order of deliveredPage?.items ?? []) {
-      list.push({
-        id: `delivered-${order.id}`, tone: 'info', isCustom: false,
-        title: `${order.order_number} delivered`,
-        detail: `${order.client_name} — ${order.mineral_type} — ${fmtZAR(order.total_zar)}`,
-        timestamp: order.updated_at,
-      })
-    }
-    for (const reminder of reminders) {
-      list.push({
-        id: reminder.id, tone: 'reminder', isCustom: true, done: reminder.done,
-        title: reminder.title,
-        detail: reminder.detail || 'No further details added.',
-        timestamp: reminder.createdAt,
-      })
-    }
-
-    return list
-      .filter((item) => !dismissed.includes(item.id))
+    return (feed ?? [])
+      .map(toDisplayItem)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  }, [pendingPage, confirmedPage, cancelledPage, deliveredPage, reminders, dismissed])
+  }, [feed])
 
   const filteredItems = useMemo(() => {
     const term = searchValue.trim().toLowerCase()
@@ -390,6 +322,12 @@ export function Notifications() {
               </button>
             </div>
 
+            {isError && (
+              <div style={{ padding: '14px 20px', borderRadius: 12, backgroundColor: `${T.rust}08`, border: `1px solid ${T.rust}15` }}>
+                <span style={{ fontSize: 13, color: T.rust, fontWeight: 500 }}>Failed to load the notification feed. Try refreshing.</span>
+              </div>
+            )}
+
             {/* Feed — each notification is its own separated card */}
             {isLoading ? (
               <div style={{ backgroundColor: T.white, borderRadius: 20, padding: '60px 0', textAlign: 'center', color: T.inkGhost, fontSize: 14, fontWeight: 500, border: `1px solid ${T.mutedCream}60` }}>
@@ -438,7 +376,7 @@ export function Notifications() {
                           </span>
                           <span style={{ fontSize: 11, color: T.inkGhost, fontWeight: 500, whiteSpace: 'nowrap' }}>{fmtRelative(item.timestamp)}</span>
                         </div>
-                        <p style={{ margin: '2px 0 0', fontSize: 12, color: T.inkSecondary }}>{item.detail}</p>
+                        <p style={{ margin: '2px 0 0', fontSize: 12, color: T.inkSecondary }}>{item.detail || 'No further details added.'}</p>
                         {item.isCustom && (
                           <span style={{
                             display: 'inline-block', marginTop: 6, fontSize: 10, fontWeight: 700,
@@ -453,7 +391,7 @@ export function Notifications() {
                         {item.isCustom ? (
                           <>
                             <button
-                              onClick={() => toggleReminderDone(item.id)}
+                              onClick={() => toggleReminderMutation.mutate(item.id)}
                               title={item.done ? 'Mark as not done' : 'Mark as done'}
                               style={{
                                 width: 26, height: 26, borderRadius: 7, border: `1px solid ${T.mutedCream}`,
@@ -464,10 +402,7 @@ export function Notifications() {
                               <CheckIcon color="currentColor" />
                             </button>
                             <button
-                              onClick={() => {
-                                const reminder = reminders.find((r) => r.id === item.id)
-                                if (reminder) openEditReminder(reminder)
-                              }}
+                              onClick={() => openEditReminder(item.id, item.title, item.detail)}
                               title="Edit reminder"
                               style={{
                                 width: 26, height: 26, borderRadius: 7, border: `1px solid ${T.mutedCream}`,
@@ -478,7 +413,7 @@ export function Notifications() {
                               <EditIcon color="currentColor" />
                             </button>
                             <button
-                              onClick={() => deleteReminder(item.id)}
+                              onClick={() => deleteReminderMutation.mutate(item.id)}
                               title="Delete reminder"
                               style={{
                                 width: 26, height: 26, borderRadius: 7, border: `1px solid ${T.mutedCream}`,
@@ -491,7 +426,7 @@ export function Notifications() {
                           </>
                         ) : (
                           <button
-                            onClick={() => dismissNotification(item.id)}
+                            onClick={() => dismissMutation.mutate(item.id)}
                             title="Dismiss notification"
                             style={{
                               width: 26, height: 26, borderRadius: 7, border: `1px solid ${T.mutedCream}`,
@@ -536,6 +471,12 @@ export function Notifications() {
               </button>
             </div>
 
+            {reminderFormError && (
+              <div style={{ padding: '10px 14px', borderRadius: 10, backgroundColor: `${T.rust}10`, color: T.rust, fontSize: 12, fontWeight: 600 }}>
+                {reminderFormError}
+              </div>
+            )}
+
             <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSecondary }}>Title</span>
               <input
@@ -571,12 +512,14 @@ export function Notifications() {
               </button>
               <button
                 type="submit"
+                disabled={isSubmittingReminder}
                 style={{
                   flex: 1, padding: '11px 0', borderRadius: 10, border: 'none',
-                  backgroundColor: T.teal, color: T.white, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  backgroundColor: T.teal, color: T.white, fontSize: 13, fontWeight: 700,
+                  cursor: isSubmittingReminder ? 'not-allowed' : 'pointer', opacity: isSubmittingReminder ? 0.7 : 1,
                 }}
               >
-                {reminderModal.kind === 'create' ? 'Add Reminder' : 'Save Changes'}
+                {isSubmittingReminder ? 'Saving...' : reminderModal.kind === 'create' ? 'Add Reminder' : 'Save Changes'}
               </button>
             </div>
           </form>

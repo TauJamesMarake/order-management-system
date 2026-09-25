@@ -119,6 +119,54 @@ export interface iOrderFilters {
   limit?: number
 }
 
+//  Notification feature
+export interface iCustomReminder {
+  id: string
+  business_id: string
+  created_by: string
+  title: string
+  detail: string | null
+  done: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface iCreateReminderDTO {
+  title: string
+  detail?: string
+}
+
+export interface iUpdateReminderDTO {
+  title?: string
+  detail?: string
+}
+
+export const NOTIFICATION_ORDER_STATUSES: OrderStatus[] = ['pending', 'confirmed', 'cancelled', 'delivered',]
+
+export interface iOrderNotificationSource {
+  kind: 'order'
+  key: string
+  order_id: string
+  order_number: string
+  client_name: string
+  mineral_type: string
+  total_zar: number
+  status: string | null
+  timestamp: string
+}
+
+export interface iReminderNotificationSource {
+  kind: 'reminder'
+  key: string
+  id: string
+  title: string
+  detail: string | null
+  done: boolean
+  timestamp: string
+}
+
+export type iNotificationFeedItem = | iOrderNotificationSource | iReminderNotificationSource
+
 declare global {
   namespace Express {
     interface Request {
@@ -130,6 +178,7 @@ declare global {
       }
 
       tenantSupabase?: SupabaseClient
+      token?: string
 
       platformAdmin?: {
         id: string
@@ -147,6 +196,7 @@ export interface iAuthenticatedRequest extends Request {
     role: UserRole
     business_id: string
   }
+  token: string
 }
 
 export interface iPlatformAuthenticatedRequest extends Request {

@@ -18,12 +18,12 @@ export interface iAuthUser {
   business_id: string
   business_name: string
 }
- 
+
 export interface iLoginCredentials {
   email: string
   password: string
 }
- 
+
 export interface iLoginResult {
   token: string
   refresh_token: string
@@ -145,6 +145,58 @@ export interface iOrderFilters {
   search?: string
   page?: number
   limit?: number
+}
+
+// Notifications feature
+export const NOTIFICATION_ORDER_STATUSES: OrderStatus[] = [
+  'pending', 'confirmed', 'cancelled', 'delivered',
+]
+
+export interface iOrderNotificationSource {
+  kind: 'order'
+  key: string
+  order_id: string
+  order_number: string
+  client_name: string
+  mineral_type: string
+  total_zar: number
+  status: OrderStatus
+  timestamp: string
+}
+
+export interface iReminderNotificationSource {
+  kind: 'reminder'
+  key: string
+  id: string
+  title: string
+  detail: string | null
+  done: boolean
+  timestamp: string
+}
+
+export type iNotificationFeedItem =
+  | iOrderNotificationSource
+  | iReminderNotificationSource
+
+export interface iCustomReminder {
+  id: string
+  business_id: string
+  created_by: string
+  title: string
+  detail: string | null
+  done: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface iCreateReminderDTO {
+  title: string
+  detail?: string
+}
+
+export interface iUpdateReminderDTO {
+  title?: string
+  detail?: string
 }
 
 declare global {

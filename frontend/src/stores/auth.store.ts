@@ -10,13 +10,16 @@ interface iAuthState {
   isAuthenticated: boolean
 
   // Actions
-  /** Called after a successful /auth/login response */
+  // Called after a successful /auth/login response
   setAuth: (user: iAuthUser, token: string) => void
-  /** Called on logout or 401 */
+
+  // Called on logout or 401
   clearAuth: () => void
-  /** Alias for clearAuth */
+
+  // Alias for clearAuth
   logout: () => void
-  /** Convenience: check if the current user has a given role */
+
+  // Convenience: check if the current user has a given role
   hasRole: (...roles: UserRole[]) => boolean
 }
 
@@ -28,9 +31,7 @@ export const useAuthStore = create<iAuthState>()(
       isAuthenticated: false,
 
       setAuth: (user, token) => {
-        // Keep sessionStorage in sync for the Axios interceptor.
-        // sessionStorage (not localStorage) so the session ends when the
-        // tab/browser closes, rather than persisting indefinitely on disk.
+        // Keep sessionStorage in sync for the Axios interceptor.s
         sessionStorage.setItem(TOKEN_KEY, token)
         set({ user, token, isAuthenticated: true })
       },
