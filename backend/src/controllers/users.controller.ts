@@ -123,7 +123,7 @@ export async function deactivateUser(req: Request, res: Response): Promise<void>
     try {
         const { id } = req.params
 
-        /* Prevent an admin from locking themselves out */
+        // Prevent an admin from locking themselves out
         if (req.user!.id === id) {
             sendError(res, 'You cannot deactivate your own account.', 400)
             return

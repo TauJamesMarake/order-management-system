@@ -7,6 +7,7 @@ import {
   iOrderFilters,
   iPaginatedResult,
 } from '../types'
+import { escapeLike } from '../utils/sql'
 
 export async function createOrder(
   dto: iCreateOrderDTO,
@@ -62,6 +63,8 @@ export async function getOrders(
   businessId: string,
   tenantSupabase: SupabaseClient,
 ): Promise<iPaginatedResult<iOrder>> {
+  console.log('[orders] filters received:', JSON.stringify(filters))
+
   const page = Math.max(1, filters.page ?? 1)
   const limit = Math.min(100, Math.max(1, filters.limit ?? 20))
   const from = (page - 1) * limit
@@ -82,7 +85,7 @@ export async function getOrders(
   }
 
   if (filters.client_name) {
-    query = query.ilike('client_name', `%${filters.client_name}%`)
+    query = query.ilike('client_name', `%${escapeLike(filters.client_name)}%`)
   }
 
   if (filters.date_from) {
