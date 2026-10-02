@@ -17,9 +17,7 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    /* Vite client types — fixes ImportMeta.env */
     "types": [
-      "vite/client",
       "node"
     ],
     /* Strict type-checking */
@@ -27,7 +25,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    /* Path aliases — must match vite.config.ts */
+    /* Path aliases — must match package.json */
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
@@ -37,7 +35,6 @@
     }
   },
   "include": [
-    "src",
-    "vite-env.d.ts"
+    "src"
   ]
 }

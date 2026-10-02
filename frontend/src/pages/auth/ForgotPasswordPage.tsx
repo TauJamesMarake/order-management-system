@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { post } from '@/lib/http'
 import { T } from '@/lib/theme'
@@ -9,11 +7,9 @@ import { AuthShell } from '@/components/auth/AuthShell'
 import { UnderlineInput } from '@/components/auth/UnderlineInput'
 import { AuthBanner, AuthButton, AuthTextLink } from '@/components/auth/AuthControls'
 
-const forgotSchema = z.object({
-    email: z.string().trim().min(1, 'Required.').email('Enter a valid email.'),
-})
-
-type ForgotValues = z.infer<typeof forgotSchema>
+interface ForgotValues {
+    email: string
+}
 
 const RESEND_COOLDOWN_SECONDS = 60
 
@@ -22,7 +18,6 @@ export function ForgotPasswordPage() {
     const [cooldown, setCooldown] = useState(0)
 
     const { register, handleSubmit, formState: { errors }, setError, clearErrors } = useForm<ForgotValues>({
-        resolver: zodResolver(forgotSchema),
         mode: 'onBlur',
         reValidateMode: 'onChange',
     })
@@ -51,7 +46,7 @@ export function ForgotPasswordPage() {
                         If an account exists for {sentTo}, a reset link has been sent. The link expires after one minute.
                     </AuthBanner>
 
-                    <p style={{ margin: 0, fontSize: 13, fontFamily: 'Lato, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontFamily: 'system-ui, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
                         Nothing arrived? Check your spam folder, or confirm the address is the one on your account.
                     </p>
 
@@ -74,7 +69,7 @@ export function ForgotPasswordPage() {
                             onClick={() => setSentTo(null)}
                             style={{
                                 background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                                fontSize: 12, fontFamily: 'Lato, sans-serif', color: T.charcoal,
+                                fontSize: 12, fontFamily: 'system-ui, sans-serif', color: T.charcoal,
                                 borderBottom: `1px solid ${T.charcoal}44`,
                             }}
                         >
@@ -94,7 +89,7 @@ export function ForgotPasswordPage() {
                 noValidate
                 style={{ display: 'flex', flexDirection: 'column', gap: 22 }}
             >
-                <p style={{ margin: 0, fontSize: 13, fontFamily: 'Lato, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
+                <p style={{ margin: 0, fontSize: 13, fontFamily: 'system-ui, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
                     Enter the email address on your account to choose a new password.
                 </p>
 
@@ -108,7 +103,11 @@ export function ForgotPasswordPage() {
                     autoComplete="email"
                     error={errors.email?.message}
                     disabled={mutation.isPending}
-                    registration={register('email')}
+                    registration={register('email', {
+                        required: 'Required.',
+                        pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email.' },
+                        setValueAs: (value: string) => value.trim(),
+                    })}
                 />
 
                 <AuthButton loading={mutation.isPending} loadingLabel="Sending…">Send reset link</AuthButton>

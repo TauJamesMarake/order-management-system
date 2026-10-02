@@ -45,7 +45,7 @@ export function UnderlineInput({
                 htmlFor={id}
                 style={{
                     fontSize: 12,
-                    fontFamily: '"DM Mono", monospace',
+                    fontFamily: 'monospace',
                     fontWeight: 600,
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
@@ -76,7 +76,7 @@ export function UnderlineInput({
                         height: 38,
                         padding: showToggle ? '0 36px 0 0' : '0',
                         fontSize: 14,
-                        fontFamily: 'Lato, system-ui, sans-serif',
+                        fontFamily: 'system-ui, sans-serif',
                         color: T.inkPrimary,
                         background: 'transparent',
                         border: 'none',
@@ -109,7 +109,7 @@ export function UnderlineInput({
                 <p
                     id={`${id}-error`}
                     role="alert"
-                    style={{ margin: 0, fontSize: 11, fontFamily: 'Lato, sans-serif', color: T.rust }}
+                    style={{ margin: 0, fontSize: 11, fontFamily: 'system-ui, sans-serif', color: T.rust }}
                 >
                     {error}
                 </p>

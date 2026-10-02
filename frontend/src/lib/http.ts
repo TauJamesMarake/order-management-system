@@ -7,10 +7,17 @@ import axios, {
 import { type iApiSuccess } from '@/types'
 
 const TOKEN_KEY = 'oms_access_token'
+const isLocalFrontend = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+const configuredApiUrl = process.env.VITE_API_URL
+const apiBaseUrl = configuredApiUrl && (!isLocalFrontend || /^https?:\/\//i.test(configuredApiUrl))
+  ? configuredApiUrl
+  : isLocalFrontend
+    ? 'http://localhost:5000/api'
+    : configuredApiUrl ?? '/api'
 
 // Create the shared instance
 export const http: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? '/api',
+  baseURL: apiBaseUrl,
   timeout: 15_000,
   headers: {
     'Content-Type': 'application/json',
@@ -40,6 +47,12 @@ http.interceptors.response.use(
   },
   (error) => {
     const status = error.response?.status
+
+    if (status === 405) {
+      return Promise.reject(
+        new Error('This action is unavailable right now. Refresh the page and try again.'),
+      )
+    }
 
     const requestUrl = error.config?.url
     const isLoginRequest = typeof requestUrl === 'string' && requestUrl.includes('/auth/login')

@@ -11,7 +11,7 @@ This repository contains a multi-tenant Order Management System (OMS) implemente
 - **Role hierarchy (two tiers):**
   - **Platform:** `superadmin` (can only manage/suspend/reactivate businesses; never order data)
   - **Business-scoped:** `admin`, `clerk`, `viewer`
-- **Frontend:** React 18 + TypeScript (Vite)
+- **Frontend:** React + TypeScript (Parcel)
 - **Backend:** Node.js + TypeScript + Express
 
 ---
@@ -133,10 +133,11 @@ npm run dev
 
 ### Frontend
 
-1. Configure API URL via Vite env (recommended):
+1. Configure the Supabase public settings in `frontend/.env`:
 
-- `frontend/.env` (create if missing) with:
-  - `VITE_API_URL=http://localhost:5000/api`
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
+  - `VITE_API_URL=http://localhost:5000/api` (optional; production defaults to `/api`)
 
 2. Start the UI:
 
@@ -146,7 +147,11 @@ npm install
 npm run dev
 ```
 
-3. Open the app in the browser.
+3. Open `http://127.0.0.1:5173`.
+
+### Production hosting
+
+Build the static frontend with `cd frontend && npm ci && npm run build`; deploy the generated `frontend/dist/` directory. Configure the host to serve `index.html` for unmatched routes so React Router URLs work after refresh. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_API_URL` at build time. The production API URL defaults to `/api`, which expects the API to share the frontend origin or be routed there by the host.
 
 ---
 

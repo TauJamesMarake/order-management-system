@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { post } from '@/lib/http'
@@ -11,18 +9,10 @@ import { AuthShell } from '@/components/auth/AuthShell'
 import { UnderlineInput } from '@/components/auth/UnderlineInput'
 import { AuthBanner, AuthButton, AuthTextLink } from '@/components/auth/AuthControls'
 
-// Mirrors the backend NewPasswordSchema (8–72 chars).
-const resetSchema = z
-  .object({
-    password: z.string().min(8, 'Min 8 characters.').max(72, 'Max 72 characters.'),
-    confirm: z.string().min(1, 'Required.'),
-  })
-  .refine((v) => v.password === v.confirm, {
-    message: 'Passwords do not match.',
-    path: ['confirm'],
-  })
-
-type ResetValues = z.infer<typeof resetSchema>
+interface ResetValues {
+  password: string
+  confirm: string
+}
 
 type RecoveryLink = { status: 'valid'; token: string } | { status: 'invalid' }
 
@@ -53,8 +43,7 @@ function ResetForm({ token }: iResetFormProps) {
   const clearAuth = useAuthStore((s) => s.clearAuth)
   const [showPwd, setShowPwd] = useState(false)
 
-  const { register, handleSubmit, formState: { errors }, setError } = useForm<ResetValues>({
-    resolver: zodResolver(resetSchema),
+  const { register, handleSubmit, formState: { errors }, setError, getValues } = useForm<ResetValues>({
     mode: 'onBlur',
     reValidateMode: 'onChange',
   })
@@ -76,7 +65,7 @@ function ResetForm({ token }: iResetFormProps) {
       noValidate
       style={{ display: 'flex', flexDirection: 'column', gap: 22 }}
     >
-      <p style={{ margin: 0, fontSize: 13, fontFamily: 'Lato, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
+      <p style={{ margin: 0, fontSize: 13, fontFamily: 'system-ui, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
         Choose a new password. You'll be signed out everywhere and asked to sign in again.
       </p>
 
@@ -90,7 +79,11 @@ function ResetForm({ token }: iResetFormProps) {
         autoComplete="new-password"
         error={errors.password?.message}
         disabled={mutation.isPending}
-        registration={register('password')}
+        registration={register('password', {
+          required: 'Required.',
+          minLength: { value: 8, message: 'Min 8 characters.' },
+          maxLength: { value: 72, message: 'Max 72 characters.' },
+        })}
         showToggle
         toggleVisible={showPwd}
         onToggle={() => setShowPwd((v) => !v)}
@@ -104,7 +97,10 @@ function ResetForm({ token }: iResetFormProps) {
         autoComplete="new-password"
         error={errors.confirm?.message}
         disabled={mutation.isPending}
-        registration={register('confirm')}
+        registration={register('confirm', {
+          required: 'Required.',
+          validate: (value) => value === getValues('password') || 'Passwords do not match.',
+        })}
       />
 
       <AuthButton loading={mutation.isPending} loadingLabel="Saving…">Save new password</AuthButton>
@@ -136,7 +132,7 @@ export function ResetPasswordPage() {
             This reset link is invalid, has already been used, or has expired.
           </AuthBanner>
 
-          <p style={{ margin: 0, fontSize: 13, fontFamily: 'Lato, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
+          <p style={{ margin: 0, fontSize: 13, fontFamily: 'system-ui, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
             Reset links work once and expire after an hour. Request a new one to continue.
           </p>
 

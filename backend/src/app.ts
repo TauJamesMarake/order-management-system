@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express, {
   Application,
   Request,
@@ -9,10 +10,6 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import { randomUUID } from 'crypto'
-import dotenv from 'dotenv'
-
-dotenv.config()
-
 import authRoutes from './routes/auth.routes'
 import orderRoutes from './routes/orders.routes'
 import userRoutes from './routes/users.routes'
@@ -25,8 +22,19 @@ const app: Application = express()
 app.use(helmet())
 
 // CORS
+const configuredClientOrigin = process.env.CLIENT_URL || 'http://localhost:5173'
+const allowedClientOrigins = new Set([
+  configuredClientOrigin,
+  ...(process.env.NODE_ENV === 'production' ? [] : [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+  ]),
+])
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    callback(null, !origin || allowedClientOrigins.has(origin))
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

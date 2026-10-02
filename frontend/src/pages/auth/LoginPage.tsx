@@ -1,7 +1,5 @@
 import { useState, type CSSProperties } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useNavigate, Link } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { post } from '@/lib/http'
@@ -9,13 +7,10 @@ import { useAuthStore } from '@/stores/auth.store'
 import { type iLoginResult, type iAuthUser } from '@/types'
 import { T } from '@/lib/theme'
 
-// Validation schemas
-const signInSchema = z.object({
-  email: z.string().min(1, 'Required.').email('Enter a valid email.'),
-  password: z.string().min(1, 'Required.').min(6, 'Min 6 characters.'),
-})
-
-type SignInValues = z.infer<typeof signInSchema>
+interface SignInValues {
+  email: string
+  password: string
+}
 
 // Eye toggle icon
 function EyeIcon({ visible }: { visible: boolean }) {
@@ -62,7 +57,7 @@ function UnderlineInput({
         htmlFor={id}
         style={{
           fontSize: 12,
-          fontFamily: '"DM Mono", monospace',
+          fontFamily: 'monospace',
           fontWeight: 600,
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
@@ -88,7 +83,7 @@ function UnderlineInput({
             height: 38,
             padding: showToggle ? '0 36px 0 0' : '0',
             fontSize: 14,
-            fontFamily: 'Lato, system-ui, sans-serif',
+            fontFamily: 'system-ui, sans-serif',
             color: T.inkPrimary,
             background: 'transparent',
             border: 'none',
@@ -122,7 +117,7 @@ function UnderlineInput({
         <p
           id={`${id}-error`}
           role="alert"
-          style={{ margin: 0, fontSize: 11, fontFamily: 'Lato, sans-serif', color: T.rust }}
+          style={{ margin: 0, fontSize: 11, fontFamily: 'system-ui, sans-serif', color: T.rust }}
         >
           {error}
         </p>
@@ -206,7 +201,7 @@ function BrandPanel() {
 
         <p style={{
           margin: '16px 0 0',
-          fontFamily: '"DM Mono", monospace',
+          fontFamily: 'monospace',
           fontSize: 18,
           fontWeight: 500,
           color: '#fff',
@@ -214,7 +209,7 @@ function BrandPanel() {
           lineHeight: 1.3,
         }}>
           Order Management System<br />
-          <span style={{ color: T.cream, fontSize: 15, fontWeight: 400, fontFamily: 'Ramaraja, serif' }}>
+          <span style={{ color: T.cream, fontSize: 15, fontWeight: 400, fontFamily: 'Georgia, serif' }}>
             Manage With Precision.
           </span>
         </p>
@@ -222,7 +217,7 @@ function BrandPanel() {
 
       {/* Copyright */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(239, 236, 230, 0.72)', letterSpacing: '0.04em' }}>
+        <p style={{ margin: 0, fontFamily: 'monospace', fontSize: 10, color: 'rgba(239, 236, 230, 0.72)', letterSpacing: '0.04em' }}>
           © {new Date().getFullYear()} Cloud Mare
         </p>
       </div>
@@ -237,7 +232,6 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
   const [btnHover, setBtnHover] = useState(false)
 
   const { register, handleSubmit, formState: { errors }, setError } = useForm<SignInValues>({
-    resolver: zodResolver(signInSchema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
   })
@@ -271,7 +265,7 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <p style={{ margin: 0, fontSize: 12, fontFamily: 'Lato, sans-serif', color: T.rust }}>
+          <p style={{ margin: 0, fontSize: 12, fontFamily: 'system-ui, sans-serif', color: T.rust }}>
             {errors.root.message}
           </p>
         </div>
@@ -285,7 +279,10 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
         autoComplete="email"
         error={errors.email?.message}
         disabled={mutation.isPending}
-        registration={register('email')}
+        registration={register('email', {
+          required: 'Required.',
+          pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email.' },
+        })}
       />
 
       <UnderlineInput
@@ -296,16 +293,19 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
         autoComplete="current-password"
         error={errors.password?.message}
         disabled={mutation.isPending}
-        registration={register('password')}
+        registration={register('password', {
+          required: 'Required.',
+          minLength: { value: 6, message: 'Min 6 characters.' },
+        })}
         showToggle
         toggleVisible={showPwd}
         onToggle={() => setShowPwd((v: boolean) => !v)}
       />
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8 }}>
-        <Link to="/reset-password" style={{
+        <Link to="/forgot-password" style={{
           fontSize: 12,
-          fontFamily: 'Lato, sans-serif',
+          fontFamily: 'system-ui, sans-serif',
           color: T.charcoal,
           textDecoration: 'none',
           borderBottom: `1px solid ${T.charcoal}44`,
@@ -329,7 +329,7 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
           backgroundColor: btnHover && !mutation.isPending ? T.deepTeal : T.teal,
           color: '#fff',
           fontSize: 14,
-          fontFamily: 'Lato, sans-serif',
+          fontFamily: 'system-ui, sans-serif',
           fontWeight: 700,
           letterSpacing: '0.04em',
           cursor: mutation.isPending ? 'not-allowed' : 'pointer',
@@ -358,7 +358,6 @@ export function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500;600&family=Lato:wght@300;400;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; }
         body { margin: 0; padding: 0; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -374,7 +373,7 @@ export function LoginPage() {
       <div style={{
         minHeight: '100vh',
         display: 'flex',
-        fontFamily: 'Lato, system-ui, sans-serif',
+        fontFamily: 'system-ui, sans-serif',
         position: 'relative',
         overflow: 'hidden',
         backgroundColor: T.teal
@@ -410,7 +409,7 @@ export function LoginPage() {
               paddingBottom: 12,
               // alignSelf: 'center',
               fontSize: 48,
-              fontFamily: 'Lato, sans-serif',
+              fontFamily: 'system-ui, sans-serif',
               fontWeight: 700,
               color: T.teal,
               borderBottom: `2.5px solid ${T.teal}`,

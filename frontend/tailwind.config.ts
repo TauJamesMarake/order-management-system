@@ -30,9 +30,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['"Playfair Display"', 'Georgia', 'serif'],
-        mono: ['"DM Mono"', '"Fira Code"', 'monospace'],
-        sans: ['Lato', 'system-ui', 'sans-serif'],
+        display: ['Georgia', 'serif'],
+        mono: ['monospace'],
+        sans: ['system-ui', 'sans-serif'],
       },
       borderRadius: {
         sm: '6px',

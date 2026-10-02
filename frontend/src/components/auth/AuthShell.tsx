@@ -73,7 +73,7 @@ function BrandPanel() {
 
                 <p style={{
                     margin: '16px 0 0',
-                    fontFamily: '"DM Mono", monospace',
+                    fontFamily: 'monospace',
                     fontSize: 18,
                     fontWeight: 500,
                     color: '#fff',
@@ -81,7 +81,7 @@ function BrandPanel() {
                     lineHeight: 1.3,
                 }}>
                     Order Management System<br />
-                    <span style={{ color: T.cream, fontSize: 15, fontWeight: 400, fontFamily: 'Ramaraja, serif' }}>
+                    <span style={{ color: T.cream, fontSize: 15, fontWeight: 400, fontFamily: 'Georgia, serif' }}>
                         Manage With Precision.
                     </span>
                 </p>
@@ -89,7 +89,7 @@ function BrandPanel() {
 
             {/* Copyright */}
             <div style={{ position: 'relative', zIndex: 1 }}>
-                <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: 10, color: 'rgba(239, 236, 230, 0.72)', letterSpacing: '0.04em' }}>
+                <p style={{ margin: 0, fontFamily: 'monospace', fontSize: 10, color: 'rgba(239, 236, 230, 0.72)', letterSpacing: '0.04em' }}>
                     © {new Date().getFullYear()} Mare (Pty) Ltd
                 </p>
             </div>
@@ -109,7 +109,6 @@ export function AuthShell({ title, compactTitle = false, children }: iAuthShellP
     return (
         <>
             <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500;600&family=Lato:wght@300;400;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; }
         body { margin: 0; padding: 0; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -124,7 +123,7 @@ export function AuthShell({ title, compactTitle = false, children }: iAuthShellP
             <div style={{
                 minHeight: '100vh',
                 display: 'flex',
-                fontFamily: 'Lato, system-ui, sans-serif',
+                fontFamily: 'system-ui, sans-serif',
                 position: 'relative',
                 overflow: 'hidden',
                 backgroundColor: T.teal,
@@ -154,7 +153,7 @@ export function AuthShell({ title, compactTitle = false, children }: iAuthShellP
                             paddingBottom: 12,
                             alignSelf: 'flex-start',
                             fontSize: compactTitle ? 36 : 48,
-                            fontFamily: 'Lato, sans-serif',
+                            fontFamily: 'system-ui, sans-serif',
                             fontWeight: 700,
                             color: T.teal,
                             borderBottom: `2.5px solid ${T.teal}`,
