@@ -232,5 +232,15 @@ export interface iPlatformAuthenticatedRequest extends Request {
   }
 }
 
+export interface iPlatformLoginResult {
+  token: string
+  refresh_token: string
+  admin: {
+    id: string
+    email: string
+    full_name: string
+  }
+}
+
 export type Nullable<T> = T | null
 export type PartialNullable<T> = { [K in keyof T]?: T[K] | null }

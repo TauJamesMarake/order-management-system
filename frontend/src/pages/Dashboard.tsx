@@ -6,9 +6,10 @@ import { get } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth.store'
 import { SideBar } from '@/components/SideBar'
 import { T } from '@/components/ColorPalette'
-import type { iOrder, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus } from '@/types'
+import type { iOrder, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus, iNotificationFeedItem } from '@/types'
 import { TopBar } from '@/components/TopBar'
 import { CalendarWidget } from '@/components/Calendar'
+import { canViewNotifications } from '@/hooks/useNotificationBadge'
 
 
 export type ColorToken = typeof T
@@ -31,7 +32,7 @@ const STATUS_CFG: Record<string, { bg: string; text: string; dot: string; label:
   confirmed: { bg: '#E0F0F0', text: '#0A4A4A', dot: T.teal, label: 'Confirmed' },
   dispatched: { bg: '#E0ECEC', text: '#0C3E3E', dot: T.deepTeal, label: 'Dispatched' },
   delivered: { bg: '#D4ECEC', text: '#0A4A4A', dot: T.success, label: 'Delivered' },
-  cancelled: { bg: '#FAE8E5', text: '#6B1A10', dot: T.rust, label: 'Cancelled' },
+  cancelled: { bg: '#FAE8E5', text: '#6b1010', dot: T.rust, label: 'Cancelled' },
 }
 
 function AlertIcon() {
@@ -104,6 +105,18 @@ export function Dashboard() {
     enabled: !!user,
   })
 
+  const canViewNotificationsFeed = !!user && canViewNotifications(user.role)
+  const {
+    data: notificationFeed,
+    isLoading: notificationsLoading,
+    isError: notificationsError,
+    refetch: refetchNotifications,
+  } = useQuery<iNotificationFeedItem[]>({
+    queryKey: ['notifications'],
+    queryFn: () => get<iNotificationFeedItem[]>('/notifications'),
+    enabled: canViewNotificationsFeed,
+  })
+
   const setFilter = (key: keyof iFilterState, value: string | number) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }))
   }
@@ -112,7 +125,9 @@ export function Dashboard() {
 
   if (!user) return null
 
-  const reminderOrders = ordersPage?.items.filter(o => o.status === 'pending' || o.status === 'confirmed').slice(0, 3) ?? []
+  const actionReminders = (notificationFeed ?? [])
+    .filter((item) => item.kind === 'reminder' ? !item.done : item.status === 'pending' || item.status === 'confirmed')
+    .slice(0, 3)
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -286,30 +301,54 @@ export function Dashboard() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: T.inkPrimary }}>Action Reminders</span>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', backgroundColor: `${T.orange}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: T.orange }}>{reminderOrders.length}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: T.orange }}>{actionReminders.length}</span>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {reminderOrders.length === 0 ? (
+                  {notificationsLoading ? (
                     <div style={{ padding: '20px 0', textAlign: 'center', color: T.inkGhost, fontSize: 12, fontWeight: 500 }}>
-                      No active processing alerts or pending reminders discovered.
+                      Loading action reminders...
+                    </div>
+                  ) : notificationsError ? (
+                    <div style={{ padding: '12px 0', textAlign: 'center', color: T.rust, fontSize: 12, fontWeight: 500 }}>
+                      Could not load action reminders.{' '}
+                      <button onClick={() => refetchNotifications()} style={{ border: 0, padding: 0, color: T.teal, background: 'none', font: 'inherit', fontWeight: 700, cursor: 'pointer' }}>
+                        Try again
+                      </button>
+                    </div>
+                  ) : !canViewNotificationsFeed ? (
+                    <div style={{ padding: '20px 0', textAlign: 'center', color: T.inkGhost, fontSize: 12, fontWeight: 500 }}>
+                      Action reminders are available to admins and clerks.
+                    </div>
+                  ) : actionReminders.length === 0 ? (
+                    <div style={{ padding: '20px 0', textAlign: 'center', color: T.inkGhost, fontSize: 12, fontWeight: 500 }}>
+                      No active notifications or reminders.
                     </div>
                   ) : (
-                    reminderOrders.map((order) => (
-                      <div key={order.id} style={{
+                    actionReminders.map((item) => (
+                      <div key={item.key} style={{
                         padding: '12px 14px', borderRadius: 14, backgroundColor: T.panelBg,
                         boxShadow: `0 2px 2px ${T.orange}`,
                         display: 'flex', flexDirection: 'column', gap: 4
                       }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: T.inkPrimary }}>{order.order_number} — {order.client_name}</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: order.status === 'pending' ? T.orange : T.teal, textTransform: 'capitalize' }}>{order.status}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: T.inkSecondary }}>
-                          <span>Commodity Asset: {order.mineral_type}</span>
-                          <span style={{ fontWeight: 600 }}>{fmtZAR(Number(order.total_zar))}</span>
-                        </div>
+                        {item.kind === 'reminder' ? (
+                          <>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: T.inkPrimary }}>{item.title}</span>
+                            {item.detail && <span style={{ fontSize: 11, color: T.inkSecondary }}>{item.detail}</span>}
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: T.inkPrimary }}>{item.order_number} — {item.client_name}</span>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: item.status === 'pending' ? T.orange : T.teal, textTransform: 'capitalize' }}>{item.status}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: T.inkSecondary }}>
+                              <span>Commodity Asset: {item.mineral_type}</span>
+                              <span style={{ fontWeight: 600 }}>{fmtZAR(item.total_zar)}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))
                   )}

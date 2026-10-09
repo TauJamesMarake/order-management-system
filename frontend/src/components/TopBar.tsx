@@ -1,6 +1,8 @@
 import { useAuthStore } from '@/stores/auth.store'
 import { T } from '@/components/ColorPalette'
 import { useNavigate } from 'react-router-dom'
+import { useNotificationBadge, canViewNotifications } from '@/hooks/useNotificationBadge'
+import { useNotificationsRealtime } from '@/hooks/useNotificationsRealtime'
 
 export function SearchIcon({ color }: { color: string }) {
   return (
@@ -66,8 +68,13 @@ export function TopBar({
   searchValue: string
   onSearchChange: (v: string) => void
 }) {
-  const { user } = useAuthStore()
+  const { user, token } = useAuthStore()
   const navigate = useNavigate()
+
+  const canView = !!user && canViewNotifications(user.role)
+  const badgeCount = useNotificationBadge()
+
+  useNotificationsRealtime(token, user?.business_id, canView)
 
   if (!user) return null
 
@@ -98,10 +105,6 @@ export function TopBar({
     case 'notifications':
       heading = 'Notifications'
       subtitle = 'Alerts, reminders & activity feed'
-      break
-    case 'myOrders':
-      heading = 'My Orders'
-      subtitle = 'Ongoing orders & history'
       break
     default:
       heading = title
@@ -166,24 +169,36 @@ export function TopBar({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 24 }}>
-        {(user?.role === 'admin' || user?.role === 'clerk') && (
+        {canView && (
           <div
             onClick={() => navigate('/notifications')}
-            title="Notifications"
+            title={badgeCount > 0 ? `${badgeCount} notification${badgeCount === 1 ? '' : 's'} need attention` : 'Notifications'}
             style={{ position: 'relative', cursor: 'pointer', padding: 4 }}
           >
             <BellIcon color={title.toLowerCase() === 'notifications' ? T.deepTeal : T.inkSecondary} />
-            <span
-              style={{
-                position: 'absolute',
-                top: 3,
-                right: 3,
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: T.orange,
-              }}
-            />
+            {badgeCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -4,
+                  minWidth: 16,
+                  height: 16,
+                  padding: '0 4px',
+                  borderRadius: 8,
+                  backgroundColor: T.orange,
+                  color: T.white,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                }}
+              >
+                {badgeCount > 9 ? '9+' : badgeCount}
+              </span>
+            )}
           </div>
         )}
 
@@ -199,4 +214,3 @@ export function TopBar({
     </header>
   )
 }
-

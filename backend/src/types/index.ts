@@ -167,6 +167,16 @@ export interface iReminderNotificationSource {
 
 export type iNotificationFeedItem = | iOrderNotificationSource | iReminderNotificationSource
 
+export interface iPlatformLoginResult {
+  token: string
+  refresh_token: string
+  admin: {
+    id: string
+    email: string
+    full_name: string
+  }
+}
+
 declare global {
   namespace Express {
     interface Request {

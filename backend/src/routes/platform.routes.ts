@@ -20,6 +20,12 @@ router.post(
     PlatformController.login as RequestHandler,
 )
 
+// router.post(
+//     '/businesses',
+//     verifyPlatformToken as RequestHandler,
+//     PlatformController.createBusiness as RequestHandler,
+// )
+
 // Platform operator (superadmin) only
 router.get(
     '/businesses',

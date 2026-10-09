@@ -5,7 +5,7 @@
  *
  * Platform admins are stored in public.platform_admins, not public.users.
  * They authenticate via /api/platform/auth/login and have no access
- * to any business's order data — only to the businesses table itself.
+ * to any business's order data, only to the businesses table itself.
  */
 
 import dotenv from 'dotenv'

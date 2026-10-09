@@ -73,7 +73,7 @@ export async function getOrders(
     }
 
     const filters: iOrderFilters = {
-      status: req.query.status as string | undefined as any,
+      status: req.query.status as iOrderFilters['status'],
       mineral_type: req.query.mineral_type as string | undefined,
       client_name: req.query.client_name as string | undefined,
       date_from: req.query.date_from as string | undefined,

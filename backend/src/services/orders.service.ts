@@ -63,7 +63,6 @@ export async function getOrders(
   businessId: string,
   tenantSupabase: SupabaseClient,
 ): Promise<iPaginatedResult<iOrder>> {
-  console.log('[orders] filters received:', JSON.stringify(filters))
 
   const page = Math.max(1, filters.page ?? 1)
   const limit = Math.min(100, Math.max(1, filters.limit ?? 20))
