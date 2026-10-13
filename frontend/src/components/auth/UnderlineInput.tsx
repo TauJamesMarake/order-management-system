@@ -40,7 +40,11 @@ export function UnderlineInput({
     const [focused, setFocused] = useState(false)
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4
+            }}>
             <label
                 htmlFor={id}
                 style={{
@@ -68,7 +72,7 @@ export function UnderlineInput({
                     onFocus={() => setFocused(true)}
                     onBlur={(e) => {
                         setFocused(false)
-                        // Keep react-hook-form's blur handler (validation mode: onBlur).
+                        // Keepreact-hook-form's blur handler (validation mode: onBlur).
                         void registration.onBlur(e)
                     }}
                     style={{

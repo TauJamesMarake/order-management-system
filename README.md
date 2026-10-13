@@ -14,6 +14,15 @@ This repository contains a multi-tenant Order Management System (OMS) implemente
 - **Frontend:** React + TypeScript (Parcel)
 - **Backend:** Node.js + TypeScript + Express
 
+### Business role page access
+
+- **Business admin (`admin`):** dashboard, orders, customers, reports, users, and notifications.
+- **Clerk:** dashboard, orders, customers, and notifications.
+- **Viewer:** read-only customer directory; select a client account name to view its associated orders.
+- **Settings:** available to every signed-in business role.
+
+The frontend applies these rules to both sidebar navigation and direct page URLs. Backend authorization remains authoritative for API access. The customer-account listing returns only account IDs and names; the orders API remains read-only for viewers.
+
 ---
 
 ## Repository Structure
@@ -87,6 +96,7 @@ Base path (default): `http://localhost:5000/api`
 ### Users (Business-scoped)
 
 - `GET /api/users` (`admin`)
+- `GET /api/orders/clients` (all authenticated business roles; distinct client account names from orders)
 - `GET /api/users/:id`
 - `POST /api/users` (`admin`)
 - `PATCH /api/users/:id` (admin full update; non-admin self limited)
@@ -190,4 +200,3 @@ Use these for platform operators to provision:
 ## License
 
 Add license information here if applicable.
-

@@ -15,6 +15,12 @@ import * as OrdersController from '../controllers/orders.controller'
 
 const router = Router()
 
+// Client account names used by orders, available to all authenticated roles.
+router.get('/clients',
+  verifyToken as RequestHandler,
+  OrdersController.getClientAccounts as RequestHandler
+)
+
 // Dashboard summary
 router.get('/summary',
   verifyToken as RequestHandler,

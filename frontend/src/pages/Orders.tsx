@@ -170,6 +170,7 @@ export function OrdersPage() {
 
   const invalidateOrderData = () => {
     queryClient.invalidateQueries({ queryKey: ['orders'] })
+    queryClient.invalidateQueries({ queryKey: ['customer-accounts'] })
     queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
     queryClient.invalidateQueries({ queryKey: ['reports-summary'] })
     queryClient.invalidateQueries({ queryKey: [ 'notifications'] })

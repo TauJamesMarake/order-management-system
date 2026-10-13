@@ -76,6 +76,7 @@ export async function getOrders(
       status: req.query.status as iOrderFilters['status'],
       mineral_type: req.query.mineral_type as string | undefined,
       client_name: req.query.client_name as string | undefined,
+      client_name_exact: req.query.client_name_exact as string | undefined,
       date_from: req.query.date_from as string | undefined,
       date_to: req.query.date_to as string | undefined,
       search: req.query.search as string | undefined,
@@ -88,6 +89,28 @@ export async function getOrders(
   } catch (err) {
     console.error('[getOrders]', err)
     sendError(res, 'Failed to fetch orders.', 500)
+  }
+}
+
+// GET /api/orders/clients
+export async function getClientAccounts(
+  req: iAuthenticatedRequest,
+  res: Response
+): Promise<void> {
+  try {
+    if (!req.tenantSupabase) {
+      sendError(res, 'Tenant database client unavailable.', 500)
+      return
+    }
+
+    const clients = await OrdersService.getClientAccounts(
+      req.user.business_id,
+      req.tenantSupabase
+    )
+    sendSuccess(res, clients)
+  } catch (err) {
+    console.error('[getClientAccounts]', err)
+    sendError(res, 'Failed to fetch client accounts.', 500)
   }
 }
 

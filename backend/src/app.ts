@@ -98,12 +98,12 @@ app.use('/api/reports', reportRoutes)
 app.use('/api/platform', platformRoutes)
 app.use('/api/notifications', notificationRoutes)
 
-/* 404 */
+// 404
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ success: false, error: 'Route not found.' })
 })
 
-/* Global error handler */
+// Global error handler
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('[Unhandled Error]', err.message)
   res.status(500).json({ success: false, error: 'Internal server error.' })

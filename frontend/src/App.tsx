@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth.store'
+import { canAccessPage, ROLE_HOME_PATH } from '@/lib/roleAccess'
 
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'))
@@ -11,14 +12,27 @@ const Reports = lazy(() => import('@/pages/Reports').then((module) => ({ default
 const Customers = lazy(() => import('@/pages/Customers').then((module) => ({ default: module.Customers })))
 const Users = lazy(() => import('@/pages/Users').then((module) => ({ default: module.Users })))
 const Notifications = lazy(() => import('@/pages/Notifications').then((module) => ({ default: module.Notifications })))
-const MyOrders = lazy(() => import('./pages/MyOrders'))
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+function ProtectedRoute({ children, path }: { children: React.ReactNode; path: string }) {
+  const { isAuthenticated, user } = useAuthStore()
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+  if (!canAccessPage(user.role, path)) {
+    return <Navigate to={ROLE_HOME_PATH[user.role]} replace />
+  }
   return <>{children}</>
+}
+
+function RoleHomeRedirect() {
+  const { isAuthenticated, user } = useAuthStore()
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />
+  }
+  return <Navigate to={ROLE_HOME_PATH[user.role]} replace />
 }
 
 export default function App() {
@@ -31,7 +45,7 @@ export default function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute path="/dashboard">
               <Dashboard />
             </ProtectedRoute>
           }
@@ -39,7 +53,7 @@ export default function App() {
         <Route
           path="/orders"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute path="/orders">
               <OrdersPage />
             </ProtectedRoute>
           }
@@ -47,7 +61,7 @@ export default function App() {
         <Route
           path="/reports"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute path="/reports">
               <Reports />
             </ProtectedRoute>
           }
@@ -56,7 +70,7 @@ export default function App() {
         <Route
           path="/customers"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute path="/customers">
               <Customers />
             </ProtectedRoute>
           }
@@ -65,7 +79,7 @@ export default function App() {
         <Route
           path="/users"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute path="/users">
               <Users />
             </ProtectedRoute>}
         />
@@ -73,21 +87,12 @@ export default function App() {
         <Route
           path="/notifications"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute path="/notifications">
               <Notifications />
             </ProtectedRoute>}
         />
 
-        <Route
-          path="/myOrders"
-          element={
-            <ProtectedRoute>
-              <MyOrders />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<RoleHomeRedirect />} />
       </Routes>
     </Suspense>
   )

@@ -140,6 +140,7 @@ export interface iOrderFilters {
   status?: OrderStatus
   mineral_type?: string
   client_name?: string
+  client_name_exact?: string
   date_from?: string
   date_to?: string
   search?: string

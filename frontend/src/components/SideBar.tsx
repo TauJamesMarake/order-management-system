@@ -4,6 +4,7 @@ import { T } from '@/components/ColorPalette'
 import { Settings } from '@/components/Settings'
 import { useAuthStore } from '@/stores/auth.store'
 import { useNotificationBadge } from '@/hooks/useNotificationBadge'
+import { canAccessPage } from '@/lib/roleAccess'
 
 function DashIcon({ color }: { color: string }) {
     return (
@@ -82,13 +83,13 @@ export function BellIcon({ color }: { color: string }) {
 
 type NavId = 'dashboard' | 'orders' | 'reports' | 'customers' | 'users' | 'notifications' | 'settings'
 
-const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: string }> }> = [
-    { id: 'dashboard', label: 'Dashboard', icon: DashIcon },
-    { id: 'orders', label: 'Orders', icon: OrderIcon },
-    { id: 'customers', label: 'Customers', icon: CustomerIcon },
-    { id: 'reports', label: 'Reports', icon: ReportIcon },
-    { id: 'notifications', label: 'Notifications', icon: BellIcon },
-    { id: 'users', label: 'Users', icon: UserIcon },
+const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: string }>; path?: string }> = [
+    { id: 'dashboard', label: 'Dashboard', icon: DashIcon, path: '/dashboard' },
+    { id: 'orders', label: 'Orders', icon: OrderIcon, path: '/orders' },
+    { id: 'customers', label: 'Customers', icon: CustomerIcon, path: '/customers' },
+    { id: 'reports', label: 'Reports', icon: ReportIcon, path: '/reports' },
+    { id: 'notifications', label: 'Notifications', icon: BellIcon, path: '/notifications' },
+    { id: 'users', label: 'Users', icon: UserIcon, path: '/users' },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
 ]
 
@@ -169,13 +170,13 @@ export function SideBar({ activePage }: { activePage: string }) {
                 <div style={{ padding: '20px 16px', borderTop: `1px solid ${T.charcoal}`, display: 'flex', flexDirection: 'column', gap: 4 }}></div>
 
                 <nav style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+                    {NAV_ITEMS.filter(({ path }) => !path || (user && canAccessPage(user.role, path))).map(({ id, label, icon: Icon, path }) => {
                         const active = activePage === id || (id === 'settings' && isSettingsOpen)
                         const showBadge = id === 'notifications' && badgeCount > 0
                         return (
                             <button
                                 key={id}
-                                onClick={() => (id === 'settings' ? setIsSettingsOpen(true) : navigate(`/${id}`))}
+                                onClick={() => (path ? navigate(path) : setIsSettingsOpen(true))}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',

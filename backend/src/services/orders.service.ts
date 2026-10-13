@@ -83,7 +83,9 @@ export async function getOrders(
     query = query.ilike('mineral_type', `%${filters.mineral_type}%`)
   }
 
-  if (filters.client_name) {
+  if (filters.client_name_exact) {
+    query = query.ilike('client_name', escapeLike(filters.client_name_exact.trim()))
+  } else if (filters.client_name) {
     query = query.ilike('client_name', `%${escapeLike(filters.client_name)}%`)
   }
 
@@ -117,6 +119,34 @@ export async function getOrders(
     limit,
     totalPages: Math.ceil(total / limit),
   }
+}
+
+export async function getClientAccounts(
+  businessId: string,
+  tenantSupabase: SupabaseClient,
+): Promise<string[]> {
+  const batchSize = 1000
+  const names = new Map<string, string>()
+
+  for (let from = 0; ; from += batchSize) {
+    const { data, error } = await tenantSupabase
+      .from('orders')
+      .select('client_name')
+      .eq('business_id', businessId)
+      .order('client_name', { ascending: true })
+      .range(from, from + batchSize - 1)
+
+    if (error) throw new Error(`Failed to fetch client accounts: ${error.message}`)
+
+    for (const row of data ?? []) {
+      const name = typeof row.client_name === 'string' ? row.client_name.trim() : ''
+      if (name) names.set(name.toLocaleLowerCase(), name)
+    }
+
+    if (!data || data.length < batchSize) break
+  }
+
+  return [...names.values()]
 }
 
 // Get one order
