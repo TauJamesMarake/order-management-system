@@ -13,7 +13,7 @@ import type {
 import { TopBar } from '@/components/TopBar'
 import { SideBar } from '@/components/SideBar'
 import { T } from '@/components/ColorPalette'
-import { useNotificationsRealtime } from '@/hooks/useNotificationsRealtime'
+import { canViewNotifications } from '@/hooks/useNotificationBadge'
 
 function fmtZAR(n: number): string {
   return new Intl.NumberFormat('en-ZA', {
@@ -63,12 +63,6 @@ function LockIcon() {
   return <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={T.rust} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
 }
 
-// Notifications are operational (order pipeline) alerts — relevant to admins
-// and clerks who action orders, not to read-only viewers.
-function canViewNotifications(role: string | undefined): boolean {
-  return role === 'admin' || role === 'clerk'
-}
-
 type NotificationTone = 'action' | 'alert' | 'info' | 'reminder'
 
 interface iNotificationItem {
@@ -77,7 +71,7 @@ interface iNotificationItem {
   title: string
   detail: string
   timestamp: string
-  /** Custom (user-created) reminders can be edited/deleted; order-derived ones can only be dismissed. */
+  // Custom (user-created) reminders can be edited/deleted; order-derived ones can only be dismissed.
   isCustom: boolean
   done?: boolean
 }
@@ -143,7 +137,7 @@ type ReminderModalMode = { kind: 'create' } | { kind: 'edit'; id: string } | nul
  */
 export function Notifications() {
   const navigate = useNavigate()
-  const { user, token } = useAuthStore()
+  const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const activePage = 'notifications'
   const [searchValue, setSearchValue] = useState('')
@@ -164,7 +158,8 @@ export function Notifications() {
     enabled: canView,
   })
 
-  useNotificationsRealtime(token, user?.business_id, canView)
+  // Live updates
+  // hooks/useNotificationBadge.ts and components/TopBar.tsx.
 
   const invalidateFeed = () => queryClient.invalidateQueries({ queryKey: ['notifications'] })
 
@@ -328,7 +323,7 @@ export function Notifications() {
               </div>
             )}
 
-            {/* Feed — each notification is its own separated card */}
+            {/* Feed: each notification is its own separated card */}
             {isLoading ? (
               <div style={{ backgroundColor: T.white, borderRadius: 20, padding: '60px 0', textAlign: 'center', color: T.inkGhost, fontSize: 14, fontWeight: 500, border: `1px solid ${T.mutedCream}60` }}>
                 Compiling notification stream...

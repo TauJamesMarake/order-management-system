@@ -45,9 +45,16 @@ function BrandPanel() {
             }} />
 
             {/* Centre area */}
-            <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 0' }}>
+            <div style={{
+                position: 'relative',
+                zIndex: 1, flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px 0' }}>
 
-                {/* Abstract mineral/mining SVG illustration */}
+                {/* Abstract SVG illustration */}
                 <svg width="220" height="220" viewBox="0 0 220 220" fill="none" aria-hidden="true">
                     <polygon
                         points="110,30 170,65 170,135 110,170 50,135 50,65"
@@ -81,7 +88,11 @@ function BrandPanel() {
                     lineHeight: 1.3,
                 }}>
                     Order Management System<br />
-                    <span style={{ color: T.cream, fontSize: 15, fontWeight: 400, fontFamily: 'Georgia, serif' }}>
+                    <span style={{
+                        color: T.cream,
+                        fontSize: 15, fontWeight: 400,
+                        fontFamily: 'Georgia, serif'
+                        }}>
                         Manage With Precision.
                     </span>
                 </p>
@@ -89,8 +100,14 @@ function BrandPanel() {
 
             {/* Copyright */}
             <div style={{ position: 'relative', zIndex: 1 }}>
-                <p style={{ margin: 0, fontFamily: 'monospace', fontSize: 10, color: 'rgba(239, 236, 230, 0.72)', letterSpacing: '0.04em' }}>
-                    © {new Date().getFullYear()} Mare (Pty) Ltd
+                <p style={{
+                    margin: 0,
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    color: 'rgba(239, 236, 230, 0.72)',
+                    letterSpacing: '0.04em'
+                    }}>
+                    © {new Date().getFullYear()} Cloud Mare (Pty) Ltd
                 </p>
             </div>
         </div>
@@ -99,12 +116,12 @@ function BrandPanel() {
 
 interface iAuthShellProps {
     title: string
-    /** Use a smaller heading for longer titles such as "Forgot password". */
+    // Use a smaller heading for longer titles such as "Forgot password".
     compactTitle?: boolean
     children: ReactNode
 }
 
-/** Two-panel layout shared by every unauthenticated page. */
+// Two-panel layout shared by every unauthenticated page.
 export function AuthShell({ title, compactTitle = false, children }: iAuthShellProps) {
     return (
         <>
@@ -135,6 +152,7 @@ export function AuthShell({ title, compactTitle = false, children }: iAuthShellP
                     overflow: 'hidden',
                     animation: 'fadeIn 0.4s ease-out forwards',
                 }}>
+                    // Left-panel
                     <BrandPanel />
 
                     <div style={{

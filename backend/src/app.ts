@@ -22,7 +22,7 @@ const app: Application = express()
 app.use(helmet())
 
 // CORS
-const configuredClientOrigin = process.env.CLIENT_URL || 'http://localhost:5173'
+const configuredClientOrigin = process.env.CLIENT_URL
 const allowedClientOrigins = new Set([
   configuredClientOrigin,
   ...(process.env.NODE_ENV === 'production' ? [] : [
@@ -54,33 +54,26 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'))
 }
 
-// Rate limiting is disabled in the test environment to prevent the
-// in-process supertest suite from exhausting the 100 req/15 min window.
-// if (process.env.NODE_ENV !== 'test') {
-//   const globalLimiter = rateLimit({
-//     windowMs: 15 * 60 * 1000,
-//     max: 100,
-//     standardHeaders: true,
-//     legacyHeaders: false,
-//     message: { success: false, error: 'Too many requests. Please try again later.' },
-//   })
-//   app.use(globalLimiter)
-// }
-
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,   // 15 minutes
-  max: 20,                // 20 login attempts per IP per window
+  max: 5,                // 5 login attempts per IP per window
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, error: 'Too many login attempts. Please try again later.' },
+  message: {
+    success: false,
+    error: 'Too many login attempts. Please try again later.'
+  },
 })
 
 const exportLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,                // 10 exports per hour
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, error: 'Export limit reached. Please try again later.' },
+  message: {
+    success: false,
+    error: 'Export limit reached. Please try again later.'
+  },
 })
 
 // app.use(globalLimiter)
@@ -105,12 +98,12 @@ app.use('/api/reports', reportRoutes)
 app.use('/api/platform', platformRoutes)
 app.use('/api/notifications', notificationRoutes)
 
-/* 404 */
+// 404
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ success: false, error: 'Route not found.' })
 })
 
-/* Global error handler */
+// Global error handler
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('[Unhandled Error]', err.message)
   res.status(500).json({ success: false, error: 'Internal server error.' })

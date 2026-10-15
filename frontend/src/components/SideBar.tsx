@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { T } from '@/components/ColorPalette'
 import { Settings } from '@/components/Settings'
 import { useAuthStore } from '@/stores/auth.store'
+import { useNotificationBadge } from '@/hooks/useNotificationBadge'
+import { canAccessPage } from '@/lib/roleAccess'
 
 function DashIcon({ color }: { color: string }) {
     return (
@@ -79,23 +81,27 @@ export function BellIcon({ color }: { color: string }) {
     )
 }
 
-type NavId = 'dashboard' | 'orders' | 'reports' | 'customers' | 'users' | 'notifications' | 'settings' | 'myOrders'
+type NavId = 'dashboard' | 'orders' | 'reports' | 'customers' | 'users' | 'notifications' | 'settings'
 
-const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: string }> }> = [
-    { id: 'dashboard', label: 'Dashboard', icon: DashIcon },
-    { id: 'orders', label: 'Orders', icon: OrderIcon },
-    { id: 'reports', label: 'Reports', icon: ReportIcon },
-    { id: 'customers', label: 'Customers', icon: CustomerIcon },
-    { id: 'notifications', label: 'Notifications', icon: BellIcon },
-    { id: 'users', label: 'Users', icon: UserIcon },
+const NAV_ITEMS: Array<{ id: NavId; label: string; icon: React.FC<{ color: string }>; path?: string }> = [
+    { id: 'dashboard', label: 'Dashboard', icon: DashIcon, path: '/dashboard' },
+    { id: 'orders', label: 'Orders', icon: OrderIcon, path: '/orders' },
+    { id: 'customers', label: 'Customers', icon: CustomerIcon, path: '/customers' },
+    { id: 'reports', label: 'Reports', icon: ReportIcon, path: '/reports' },
+    { id: 'notifications', label: 'Notifications', icon: BellIcon, path: '/notifications' },
+    { id: 'users', label: 'Users', icon: UserIcon, path: '/users' },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
-    { id: 'myOrders', label: 'My Orders', icon: OrderIcon }
 ]
 
 export function SideBar({ activePage }: { activePage: string }) {
     const navigate = useNavigate()
     const { user } = useAuthStore()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+    // Reads the same ['notifications'] cache TopBar's live subscription
+    // keeps fresh — no Realtime subscription of its own here, see
+    // useNotificationBadge.ts for why that ownership lives in TopBar.
+    const badgeCount = useNotificationBadge()
 
     const roleStyle = useMemo(() => {
         const cfg: Record<string, { bg: string; text: string; label: string }> = {
@@ -164,12 +170,13 @@ export function SideBar({ activePage }: { activePage: string }) {
                 <div style={{ padding: '20px 16px', borderTop: `1px solid ${T.charcoal}`, display: 'flex', flexDirection: 'column', gap: 4 }}></div>
 
                 <nav style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+                    {NAV_ITEMS.filter(({ path }) => !path || (user && canAccessPage(user.role, path))).map(({ id, label, icon: Icon, path }) => {
                         const active = activePage === id || (id === 'settings' && isSettingsOpen)
+                        const showBadge = id === 'notifications' && badgeCount > 0
                         return (
                             <button
                                 key={id}
-                                onClick={() => (id === 'settings' ? setIsSettingsOpen(true) : navigate(`/${id}`))}
+                                onClick={() => (path ? navigate(path) : setIsSettingsOpen(true))}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -184,7 +191,32 @@ export function SideBar({ activePage }: { activePage: string }) {
                                     transition: 'all 0.2s ease',
                                 }}
                             >
-                                <Icon color={active ? T.white : T.charcoal} />
+                                <div style={{ position: 'relative', display: 'flex' }}>
+                                    <Icon color={active ? T.white : T.charcoal} />
+                                    {showBadge && (
+                                        <span
+                                            style={{
+                                                position: 'absolute',
+                                                top: -4,
+                                                right: -6,
+                                                minWidth: 14,
+                                                height: 14,
+                                                padding: '0 3px',
+                                                borderRadius: 7,
+                                                backgroundColor: active ? T.white : T.orange,
+                                                color: active ? T.teal : T.white,
+                                                fontSize: 9,
+                                                fontWeight: 700,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                lineHeight: 1,
+                                            }}
+                                        >
+                                            {badgeCount > 9 ? '9+' : badgeCount}
+                                        </span>
+                                    )}
+                                </div>
                                 <span style={{ fontSize: 14, fontWeight: active ? 600 : 500, color: active ? T.white : T.charcoal }}>{label}</span>
                             </button>
                         )

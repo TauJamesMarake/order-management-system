@@ -115,7 +115,7 @@ export async function buildExcelReport(
       unit_price: Number(order.unit_price_zar),
       total: Number(order.total_zar),
       status: capitalise(order.status),
-      creator: (order as any).creator_name ?? 'Unknown',
+      creator: order.creator?.full_name ?? 'Unknown',
       created_at: formatDate(order.created_at),
     })
 
@@ -287,7 +287,7 @@ export async function buildPdfReport(
     formatZAR(Number(o.unit_price_zar)),
     formatZAR(Number(o.total_zar)),
     capitalise(o.status),
-    (o as any).creator_name ?? '—',
+    (o).creator?.full_name ?? '—',
     formatDate(o.created_at),
   ])
 
@@ -343,7 +343,7 @@ export async function buildPdfReport(
   })
 
   // Summary footer
-  const finalY = (doc as any).lastAutoTable.finalY + 6
+  const finalY = (doc as typeof doc & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6
   const totalValue = orders.reduce((sum, o) => sum + Number(o.total_zar), 0)
 
   doc.setFillColor(...MID)

@@ -20,6 +20,23 @@ const SelfUpdateSchema = z.object({
     full_name: z.string().min(2).max(255),
 })
 
+const USER_ROLES = ['admin', 'clerk', 'viewer'] as const
+
+type UserRole = (typeof USER_ROLES)[number]
+
+function parseUserRoleFilter(value: unknown): UserRole | undefined {
+    if (Array.isArray(value)) {
+        return parseUserRoleFilter(value[0])
+    }
+
+    if (typeof value !== 'string') {
+        return undefined
+    }
+
+    const normalized = value.trim().toLowerCase()
+    return USER_ROLES.includes(normalized as UserRole) ? (normalized as UserRole) : undefined
+}
+
 type CreateUserPayload = z.infer<typeof CreateUserSchema>
 type AdminUpdatePayload = z.infer<typeof AdminUpdateSchema>
 
@@ -27,11 +44,14 @@ type AdminUpdatePayload = z.infer<typeof AdminUpdateSchema>
 // Admin only
 export async function getUsers(req: Request, res: Response): Promise<void> {
     try {
-        const filters = {
-            role: req.query.role as any,
-            is_active: req.query.is_active !== undefined
-                ? req.query.is_active === 'true'
-                : undefined,
+        const isActiveValue = req.query.is_active
+        const filters: { role?: UserRole; is_active?: boolean } = {
+            role: parseUserRoleFilter(req.query.role),
+            is_active: Array.isArray(isActiveValue)
+                ? isActiveValue[0] === 'true'
+                : typeof isActiveValue === 'string'
+                    ? isActiveValue === 'true'
+                    : undefined,
         }
 
         const users = await UsersService.getUsers(filters, req.user!.business_id, req.tenantSupabase!)

@@ -104,7 +104,7 @@ export function ForgotPasswordPage() {
                     error={errors.email?.message}
                     disabled={mutation.isPending}
                     registration={register('email', {
-                        required: 'Required.',
+                        required: 'Email is required.',
                         pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email.' },
                         setValueAs: (value: string) => value.trim(),
                     })}

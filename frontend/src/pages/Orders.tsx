@@ -4,11 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { get, post, patch } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth.store'
-import type { iOrder, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus, iCreateOrderDTO, iUpdateOrderDTO } from '@/types'
+import type { iOrder, iDashboardSummary, iPaginatedResult, iOrderFilters, OrderStatus, iCreateOrderDTO, iUpdateOrderDTO, iNotificationFeedItem } from '@/types'
 import { TopBar } from '@/components/TopBar'
 import { SideBar } from '@/components/SideBar'
 
 import { T } from '@/components/ColorPalette'
+import { canViewNotifications } from '@/hooks/useNotificationBadge'
 
 export type ColorToken = typeof T
 export type ColorTokenKey = keyof ColorToken
@@ -145,6 +146,18 @@ export function OrdersPage() {
     enabled: !!user,
   })
 
+  const canViewNotificationsFeed = !!user && canViewNotifications(user.role)
+  const {
+    data: notificationFeed,
+    isLoading: notificationsLoading,
+    isError: notificationsError,
+    refetch: refetchNotifications,
+  } = useQuery<iNotificationFeedItem[]>({
+    queryKey: ['notifications'],
+    queryFn: () => get<iNotificationFeedItem[]>('/notifications'),
+    enabled: canViewNotificationsFeed,
+  })
+
   const setFilter = (key: keyof iFilterState, value: string | number) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }))
   }
@@ -157,8 +170,10 @@ export function OrdersPage() {
 
   const invalidateOrderData = () => {
     queryClient.invalidateQueries({ queryKey: ['orders'] })
+    queryClient.invalidateQueries({ queryKey: ['customer-accounts'] })
     queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
     queryClient.invalidateQueries({ queryKey: ['reports-summary'] })
+    queryClient.invalidateQueries({ queryKey: [ 'notifications'] })
   }
 
   const createMutation = useMutation({
@@ -260,8 +275,11 @@ export function OrdersPage() {
 
   if (!user) return null
 
-  // Extract a list of recent items needing immediate processing to use inside the Calendar Reminder panel window
-  const activeReminders = ordersPage?.items?.filter(o => o.status === 'pending' || o.status === 'confirmed').slice(0, 4) || []
+  const activeReminders = (notificationFeed ?? [])
+    .filter((item): item is Extract<iNotificationFeedItem, { kind: 'order' }> =>
+      item.kind === 'order' && (item.status === 'pending' || item.status === 'confirmed')
+    )
+    .slice(0, 4)
 
   return (
     <div style={{
@@ -531,14 +549,29 @@ export function OrdersPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {activeReminders.length === 0 ? (
+                {notificationsLoading ? (
                   <div style={{ padding: '20px 0', textAlign: 'center', color: T.inkGhost, fontSize: 12, fontWeight: 500 }}>
-                    No pending items require operational verification.
+                    Loading critical order reminders...
+                  </div>
+                ) : notificationsError ? (
+                  <div style={{ padding: '12px 0', textAlign: 'center', color: T.rust, fontSize: 12, fontWeight: 500 }}>
+                    Could not load critical order reminders.{' '}
+                    <button onClick={() => refetchNotifications()} style={{ border: 0, padding: 0, color: T.teal, background: 'none', font: 'inherit', fontWeight: 700, cursor: 'pointer' }}>
+                      Try again
+                    </button>
+                  </div>
+                ) : !canViewNotificationsFeed ? (
+                  <div style={{ padding: '20px 0', textAlign: 'center', color: T.inkGhost, fontSize: 12, fontWeight: 500 }}>
+                    Critical order reminders are available to admins and clerks.
+                  </div>
+                ) : activeReminders.length === 0 ? (
+                  <div style={{ padding: '20px 0', textAlign: 'center', color: T.inkGhost, fontSize: 12, fontWeight: 500 }}>
+                    No critical order notifications.
                   </div>
                 ) : (
                   activeReminders.map((reminder) => (
                     <div
-                      key={reminder.id}
+                      key={reminder.key}
                       style={{
                         padding: '12px 16px',
                         borderRadius: 14,
@@ -551,14 +584,14 @@ export function OrdersPage() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: T.inkPrimary }}>{reminder.order_number}</span>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: T.inkGhost }}>{fmtDate(reminder.created_at)}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: T.inkGhost }}>{fmtDate(reminder.timestamp)}</span>
                       </div>
                       <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.inkSecondary, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {reminder.client_name}
                       </p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2, fontSize: 11 }}>
-                        <span style={{ color: T.inkGhost, fontWeight: 500 }}>Commodity: {reminder.mineral_type}</span>
-                        <span style={{ color: T.inkPrimary, fontWeight: 700 }}>{fmtZAR(Number(reminder.total_zar))}</span>
+                        <span style={{ color: T.inkGhost, fontWeight: 500 }}>Commodity: {reminder.mineral_type} · {reminder.status}</span>
+                        <span style={{ color: T.inkPrimary, fontWeight: 700 }}>{fmtZAR(reminder.total_zar)}</span>
                       </div>
                     </div>
                   ))

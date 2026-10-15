@@ -112,6 +112,7 @@ export interface iOrderFilters {
   status?: OrderStatus
   mineral_type?: string
   client_name?: string
+  client_name_exact?: string
   date_from?: string
   date_to?: string
   search?: string
@@ -166,6 +167,16 @@ export interface iReminderNotificationSource {
 }
 
 export type iNotificationFeedItem = | iOrderNotificationSource | iReminderNotificationSource
+
+export interface iPlatformLoginResult {
+  token: string
+  refresh_token: string
+  admin: {
+    id: string
+    email: string
+    full_name: string
+  }
+}
 
 declare global {
   namespace Express {

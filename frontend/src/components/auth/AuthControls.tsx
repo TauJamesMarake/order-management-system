@@ -9,7 +9,9 @@ export function AuthBanner({ tone, children }: { tone: 'error' | 'success'; chil
         <div
             role={tone === 'error' ? 'alert' : 'status'}
             style={{
-                display: 'flex', alignItems: 'flex-start', gap: 8,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 8,
                 padding: '10px 14px',
                 backgroundColor: `${color}0d`,
                 border: `1px solid ${color}33`,
@@ -50,8 +52,11 @@ interface iAuthButtonProps {
 }
 
 export function AuthButton({
-    loading = false, loadingLabel, disabled = false,
-    variant = 'primary', type = 'submit', onClick, children,
+    loading = false,
+    loadingLabel, disabled = false,
+    variant = 'primary',
+    type = 'submit',
+    onClick, children,
 }: iAuthButtonProps) {
     const [hover, setHover] = useState(false)
     const inactive = loading || disabled
@@ -80,7 +85,10 @@ export function AuthButton({
                 cursor: inactive ? 'not-allowed' : 'pointer',
                 opacity: inactive ? 0.65 : 1,
                 transition: 'background-color 0.15s',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
             }}
         >
             {loading ? (

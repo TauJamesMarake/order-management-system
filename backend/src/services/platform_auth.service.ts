@@ -1,20 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '../db/supabase'
+import { iPlatformLoginResult } from '../types'
 
 const anonClient = createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!
 )
-
-export interface iPlatformLoginResult {
-    token: string
-    refresh_token: string
-    admin: {
-        id: string
-        email: string
-        full_name: string
-    }
-}
 
 export async function login(
     email: string,

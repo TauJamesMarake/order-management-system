@@ -80,7 +80,7 @@ function ResetForm({ token }: iResetFormProps) {
         error={errors.password?.message}
         disabled={mutation.isPending}
         registration={register('password', {
-          required: 'Required.',
+          required: 'Password is required.',
           minLength: { value: 8, message: 'Min 8 characters.' },
           maxLength: { value: 72, message: 'Max 72 characters.' },
         })}
@@ -98,7 +98,7 @@ function ResetForm({ token }: iResetFormProps) {
         error={errors.confirm?.message}
         disabled={mutation.isPending}
         registration={register('confirm', {
-          required: 'Required.',
+          required: 'Password is required.',
           validate: (value) => value === getValues('password') || 'Passwords do not match.',
         })}
       />

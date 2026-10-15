@@ -280,7 +280,7 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
         error={errors.email?.message}
         disabled={mutation.isPending}
         registration={register('email', {
-          required: 'Required.',
+          required: 'Email address is required.',
           pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email.' },
         })}
       />
@@ -294,7 +294,7 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
         error={errors.password?.message}
         disabled={mutation.isPending}
         registration={register('password', {
-          required: 'Required.',
+          required: 'Password is required.',
           minLength: { value: 6, message: 'Min 6 characters.' },
         })}
         showToggle
