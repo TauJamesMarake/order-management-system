@@ -80,7 +80,7 @@ export function UnderlineInput({
                         height: 38,
                         padding: showToggle ? '0 36px 0 0' : '0',
                         fontSize: 14,
-                        fontFamily: 'system-ui, sans-serif',
+                        fontFamily: 'Inter, sans-serif',
                         color: T.inkPrimary,
                         background: 'transparent',
                         border: 'none',
@@ -113,7 +113,7 @@ export function UnderlineInput({
                 <p
                     id={`${id}-error`}
                     role="alert"
-                    style={{ margin: 0, fontSize: 11, fontFamily: 'system-ui, sans-serif', color: T.rust }}
+                    style={{ margin: 0, fontSize: 11, fontFamily: 'Inter, sans-serif', color: T.rust }}
                 >
                     {error}
                 </p>

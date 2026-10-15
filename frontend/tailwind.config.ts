@@ -30,9 +30,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['Georgia', 'serif'],
+        display: ['Satoshi', 'sans-serif'],
         mono: ['monospace'],
-        sans: ['system-ui', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
       },
       borderRadius: {
         sm: '6px',

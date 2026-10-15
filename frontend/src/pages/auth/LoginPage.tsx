@@ -83,7 +83,7 @@ function UnderlineInput({
             height: 38,
             padding: showToggle ? '0 36px 0 0' : '0',
             fontSize: 14,
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: 'Inter, sans-serif',
             color: T.inkPrimary,
             background: 'transparent',
             border: 'none',
@@ -117,7 +117,7 @@ function UnderlineInput({
         <p
           id={`${id}-error`}
           role="alert"
-          style={{ margin: 0, fontSize: 11, fontFamily: 'system-ui, sans-serif', color: T.rust }}
+          style={{ margin: 0, fontSize: 11, fontFamily: 'Inter, sans-serif', color: T.rust }}
         >
           {error}
         </p>
@@ -209,7 +209,7 @@ function BrandPanel() {
           lineHeight: 1.3,
         }}>
           Order Management System<br />
-          <span style={{ color: T.cream, fontSize: 15, fontWeight: 400, fontFamily: 'Georgia, serif' }}>
+          <span style={{ color: T.cream, fontSize: 15, fontWeight: 400, fontFamily: 'Satoshi, sans-serif' }}>
             Manage With Precision.
           </span>
         </p>
@@ -265,7 +265,7 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <p style={{ margin: 0, fontSize: 12, fontFamily: 'system-ui, sans-serif', color: T.rust }}>
+          <p style={{ margin: 0, fontSize: 12, fontFamily: 'Inter, sans-serif', color: T.rust }}>
             {errors.root.message}
           </p>
         </div>
@@ -305,7 +305,7 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8 }}>
         <Link to="/forgot-password" style={{
           fontSize: 12,
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: 'Inter, sans-serif',
           color: T.charcoal,
           textDecoration: 'none',
           borderBottom: `1px solid ${T.charcoal}44`,
@@ -329,7 +329,7 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
           backgroundColor: btnHover && !mutation.isPending ? T.deepTeal : T.teal,
           color: '#fff',
           fontSize: 14,
-          fontFamily: 'system-ui, sans-serif',
+          fontFamily: 'Inter, sans-serif',
           fontWeight: 700,
           letterSpacing: '0.04em',
           cursor: mutation.isPending ? 'not-allowed' : 'pointer',
@@ -373,7 +373,7 @@ export function LoginPage() {
       <div style={{
         minHeight: '100vh',
         display: 'flex',
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: 'Inter, sans-serif',
         position: 'relative',
         overflow: 'hidden',
         backgroundColor: T.teal
@@ -409,7 +409,7 @@ export function LoginPage() {
               paddingBottom: 12,
               // alignSelf: 'center',
               fontSize: 48,
-              fontFamily: 'system-ui, sans-serif',
+              fontFamily: 'Inter, sans-serif',
               fontWeight: 700,
               color: T.teal,
               borderBottom: `2.5px solid ${T.teal}`,

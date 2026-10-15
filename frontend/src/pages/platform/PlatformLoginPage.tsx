@@ -55,7 +55,7 @@ export function PlatformLoginPage() {
         justifyContent: 'center',
         padding: 24,
         background: T.teal,
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: 'Inter, sans-serif',
       }}
     >
       <section

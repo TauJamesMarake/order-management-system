@@ -91,7 +91,7 @@ function BrandPanel() {
                     <span style={{
                         color: T.cream,
                         fontSize: 15, fontWeight: 400,
-                        fontFamily: 'Georgia, serif'
+                        fontFamily: 'Satoshi, sans-serif'
                         }}>
                         Manage With Precision.
                     </span>
@@ -140,7 +140,7 @@ export function AuthShell({ title, compactTitle = false, children }: iAuthShellP
             <div style={{
                 minHeight: '100vh',
                 display: 'flex',
-                fontFamily: 'system-ui, sans-serif',
+                fontFamily: 'Inter, sans-serif',
                 position: 'relative',
                 overflow: 'hidden',
                 backgroundColor: T.teal,
@@ -171,7 +171,7 @@ export function AuthShell({ title, compactTitle = false, children }: iAuthShellP
                             paddingBottom: 12,
                             alignSelf: 'flex-start',
                             fontSize: compactTitle ? 36 : 48,
-                            fontFamily: 'system-ui, sans-serif',
+                            fontFamily: 'Inter, sans-serif',
                             fontWeight: 700,
                             color: T.teal,
                             borderBottom: `2.5px solid ${T.teal}`,

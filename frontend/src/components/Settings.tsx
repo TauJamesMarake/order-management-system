@@ -58,7 +58,7 @@ export function Settings({ onClose }: iSettingsProps) {
         bottom: 74,
         left: 24,
         zIndex: 9999,
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontFamily: 'Inter, sans-serif'
       }}
     >
       {/* Backdrop Dismissal */}

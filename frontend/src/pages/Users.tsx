@@ -202,7 +202,7 @@ export function Users() {
 
   if (currentUser.role !== 'admin') {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'Inter, sans-serif' }}>
         <SideBar activePage={activePage} />
         {isSettingsOpen && <Settings onClose={() => setIsSettingsOpen(false)} />}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -227,7 +227,7 @@ export function Users() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: T.mutedCream, fontFamily: 'Inter, sans-serif' }}>
       <SideBar activePage={activePage} />
       {isSettingsOpen && <Settings onClose={() => setIsSettingsOpen(false)} />}
 

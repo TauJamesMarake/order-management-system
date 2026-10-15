@@ -34,7 +34,7 @@ export function AuthBanner({ tone, children }: { tone: 'error' | 'success'; chil
                     </>
                 )}
             </svg>
-            <p style={{ margin: 0, fontSize: 12, fontFamily: 'system-ui, sans-serif', color, lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 12, fontFamily: 'Inter, sans-serif', color, lineHeight: 1.5 }}>
                 {children}
             </p>
         </div>
@@ -79,7 +79,7 @@ export function AuthButton({
                     : (hover && !inactive ? `${T.teal}14` : 'transparent'),
                 color: primary ? '#fff' : T.deepTeal,
                 fontSize: 14,
-                fontFamily: 'system-ui, sans-serif',
+                fontFamily: 'Inter, sans-serif',
                 fontWeight: 700,
                 letterSpacing: '0.04em',
                 cursor: inactive ? 'not-allowed' : 'pointer',
@@ -108,7 +108,7 @@ export function AuthTextLink({ to, children }: { to: string; children: ReactNode
     return (
         <Link to={to} style={{
             fontSize: 12,
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: 'Inter, sans-serif',
             color: T.charcoal,
             textDecoration: 'none',
             borderBottom: `1px solid ${T.charcoal}44`,

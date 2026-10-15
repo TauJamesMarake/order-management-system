@@ -65,7 +65,7 @@ function ResetForm({ token }: iResetFormProps) {
       noValidate
       style={{ display: 'flex', flexDirection: 'column', gap: 22 }}
     >
-      <p style={{ margin: 0, fontSize: 13, fontFamily: 'system-ui, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
+      <p style={{ margin: 0, fontSize: 13, fontFamily: 'Inter, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
         Choose a new password. You'll be signed out everywhere and asked to sign in again.
       </p>
 
@@ -132,7 +132,7 @@ export function ResetPasswordPage() {
             This reset link is invalid, has already been used, or has expired.
           </AuthBanner>
 
-          <p style={{ margin: 0, fontSize: 13, fontFamily: 'system-ui, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
+          <p style={{ margin: 0, fontSize: 13, fontFamily: 'Inter, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
             Reset links work once and expire after an hour. Request a new one to continue.
           </p>
 

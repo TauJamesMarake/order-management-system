@@ -46,7 +46,7 @@ export function ForgotPasswordPage() {
                         If an account exists for {sentTo}, a reset link has been sent. The link expires after one minute.
                     </AuthBanner>
 
-                    <p style={{ margin: 0, fontSize: 13, fontFamily: 'system-ui, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontFamily: 'Inter, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
                         Nothing arrived? Check your spam folder, or confirm the address is the one on your account.
                     </p>
 
@@ -69,7 +69,7 @@ export function ForgotPasswordPage() {
                             onClick={() => setSentTo(null)}
                             style={{
                                 background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                                fontSize: 12, fontFamily: 'system-ui, sans-serif', color: T.charcoal,
+                                fontSize: 12, fontFamily: 'Inter, sans-serif', color: T.charcoal,
                                 borderBottom: `1px solid ${T.charcoal}44`,
                             }}
                         >
@@ -89,7 +89,7 @@ export function ForgotPasswordPage() {
                 noValidate
                 style={{ display: 'flex', flexDirection: 'column', gap: 22 }}
             >
-                <p style={{ margin: 0, fontSize: 13, fontFamily: 'system-ui, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
+                <p style={{ margin: 0, fontSize: 13, fontFamily: 'Inter, sans-serif', color: T.inkSecondary, lineHeight: 1.6 }}>
                     Enter the email address on your account to choose a new password.
                 </p>
 

@@ -286,7 +286,7 @@ export function OrdersPage() {
       display: 'flex',
       minHeight: '100vh',
       backgroundColor: T.mutedCream,
-      fontFamily: 'system-ui, -apple-system, sans-serif'
+      fontFamily: 'Inter, sans-serif'
     }}>
 
       <SideBar activePage={activePage} />
